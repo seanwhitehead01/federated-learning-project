@@ -12,7 +12,11 @@ def download_and_save_cifar100(data_dir="dataset", save_name="cifar100"):
         print("✅ CIFAR-100 already downloaded and saved.")
         return
 
-    transform = transforms.Compose([transforms.ToTensor()])
+    transform = transforms.Compose([
+        transforms.Resize(224),  # Resize 32x32 -> 224x224
+        transforms.ToTensor(),
+        transforms.Normalize((0.5071, 0.4865, 0.4409), (0.2673, 0.2564, 0.2761))
+    ])
 
     print("📥 Downloading CIFAR-100 training set...")
     trainset = datasets.CIFAR100(root=data_dir, train=True, download=True, transform=transform)
