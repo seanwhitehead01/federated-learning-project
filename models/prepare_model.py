@@ -4,7 +4,7 @@ import torch.nn as nn
 def get_dino_vit_model(num_classes=100, freeze_backbone=True):
     model = torch.hub.load('facebookresearch/dino:main', 'dino_vits16')
 
-    for param in model.features.parameters():
+    for param in model.parameters():
         param.requires_grad = False
     
     output_shape = num_classes
