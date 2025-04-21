@@ -1,3 +1,5 @@
+import os
+import torch
 from torchvision import datasets, transforms
 
 def download_and_save_cifar100(data_dir=".", save_name="cifar100"):
