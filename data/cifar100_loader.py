@@ -1,6 +1,8 @@
 import torch
 import os
 from torch.utils.data import DataLoader
+from torchvision.datasets import CIFAR100
+from torch.serialization import safe_globals
 
 def get_cifar100_dataloaders(
     dataset_dir="dataset",
@@ -15,8 +17,9 @@ def get_cifar100_dataloaders(
     if not (os.path.exists(train_path) and os.path.exists(test_path)):
         raise FileNotFoundError("Dataset not found. Run download_cifar100.py first.")
 
-    train_set = torch.load(train_path)
-    test_set = torch.load(test_path)
+    with safe_globals([CIFAR100]):
+        train_set = torch.load(train_path, weights_only=False)
+        test_set = torch.load(test_path, weights_only=False)
 
     train_loader = DataLoader(
         train_set,
