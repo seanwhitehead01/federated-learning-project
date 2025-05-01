@@ -1,9 +1,10 @@
 import torch.optim as optim
 import itertools
+from models.prepare_model import get_frozen_dino_vits16_model
 from eval import evaluate
 from train import train
 
-def run_grid_search(train_loader, val_loader, model_fn, criterion, device):
+def run_grid_search(train_loader, val_loader, criterion, device):
     lr_list = [0.01, 0.001]
     momentum_list = [0.9, 0.95]
     T_max_list = [10, 30]
@@ -12,7 +13,7 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, device):
     best_model_state = None
 
     for lr, momentum, T_max in itertools.product(lr_list, momentum_list, T_max_list):
-        model = model_fn(device)
+        model = get_frozen_dino_vits16_model(device)
         optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
         scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=T_max)
 
