@@ -1,40 +1,28 @@
-import torch
-import os
+# This script defines a function to load the CIFAR-100 dataset using PyTorch.
+# It includes data augmentation and normalization transformations for training and testing sets.
+# The function returns DataLoader objects for both training and testing datasets.
+
+from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from torchvision.datasets import CIFAR100
-from torch.serialization import safe_globals
 
-def get_cifar100_dataloaders(
-    dataset_dir="dataset",
-    batch_size=128,
-    num_workers=2,
-    pin_memory=True,
-    shuffle_train=True,
-):
-    train_path = f"{dataset_dir}/cifar100_train.pt"
-    test_path = f"{dataset_dir}/cifar100_test.pt"
+def get_cifar100_loaders(batch_size=256):
+    transform_train = transforms.Compose([
+        transforms.Resize(224),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
+    ])
 
-    if not (os.path.exists(train_path) and os.path.exists(test_path)):
-        raise FileNotFoundError("Dataset not found. Run download_cifar100.py first.")
+    transform_test = transforms.Compose([
+        transforms.Resize(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
+    ])
 
-    with safe_globals([CIFAR100]):
-        train_set = torch.load(train_path, weights_only=False)
-        test_set = torch.load(test_path, weights_only=False)
+    train_dataset = datasets.CIFAR100(root='dataset', train=True, download=True, transform=transform_train)
+    test_dataset = datasets.CIFAR100(root='dataset', train=False, download=True, transform=transform_test)
 
-    train_loader = DataLoader(
-        train_set,
-        batch_size=batch_size,
-        shuffle=shuffle_train,
-        num_workers=num_workers,
-        pin_memory=pin_memory
-    )
-
-    test_loader = DataLoader(
-        test_set,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=num_workers,
-        pin_memory=pin_memory
-    )
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     return train_loader, test_loader

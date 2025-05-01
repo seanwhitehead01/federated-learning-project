@@ -1,30 +1,18 @@
+# This script evaluates a PyTorch model on a given dataset.
+
 import torch
-import torch.nn as nn
 
-def eval(model, test_loader, device):
-    model.eval()  # Set model to evaluation mode
-    correct_preds = 0
-    total_preds = 0
-    running_loss = 0.0
-    criterion = nn.CrossEntropyLoss()
-
+def evaluate(model, loader, criterion, device):
+    model.eval()
+    total_loss, correct = 0, 0
     with torch.no_grad():
-        for inputs, targets in test_loader:
-            # Move data to GPU if available
+        for inputs, targets in loader:
             inputs, targets = inputs.to(device), targets.to(device)
-
-            # Forward pass
             outputs = model(inputs)
-            
-            # Calculate loss
             loss = criterion(outputs, targets)
-            running_loss += loss.item()
 
-            # Calculate accuracy
-            _, predicted = outputs.max(1)
-            correct_preds += (predicted == targets).sum().item()
-            total_preds += targets.size(0)
+            total_loss += loss.item() * inputs.size(0)
+            correct += outputs.argmax(1).eq(targets).sum().item()
 
-    test_loss = running_loss / len(test_loader)
-    test_accuracy = 100 * correct_preds / total_preds
-    print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.2f}%")
+    accuracy = correct / len(loader.dataset)
+    return total_loss / len(loader.dataset), accuracy

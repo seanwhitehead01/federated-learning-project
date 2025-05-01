@@ -1,19 +1,26 @@
+# This script prepares the frozen DINO ViT-S/16 model for transfer learning.
+# It loads the model from Facebook's DINO repository, freezes its parameters, and adds a classification head.
+
 import torch
 import torch.nn as nn
 
-def get_dino_vit_model(num_classes=100, freeze_backbone=True):
-    model = torch.hub.load('facebookresearch/dino:main', 'dino_vits16')
+def get_frozen_dino_vits16_model(device, num_classes=100):
+    base_model = torch.hub.load('facebookresearch/dino:main', 'dino_vits16')
 
-    # Save the embedding dim
-    embed_dim = 384
+    # Freeze all base model parameters
+    for param in base_model.parameters():
+        param.requires_grad = False
 
-    # Replace the head with a new classifier head
-    model.head = nn.Linear(embed_dim, num_classes)
+    # Compose full model with additional classification head
+    class DinoClassifier(nn.Module):
+        def __init__(self, base, num_classes):
+            super().__init__()
+            self.base = base
+            self.classifier = nn.Linear(base.num_features, num_classes)
 
-    # Freeze the backbone (everything except the new head)
-    if freeze_backbone:
-        for name, param in model.named_parameters():
-            if not name.startswith("head."):
-                param.requires_grad = False
+        def forward(self, x):
+            x = self.base(x)
+            return self.classifier(x)
 
-    return model
+    model = DinoClassifier(base_model, num_classes)
+    return model.to(device)
