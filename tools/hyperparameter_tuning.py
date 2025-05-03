@@ -6,17 +6,17 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
     best_acc = 0
     best_cfg = None
     best_model_state = None
-    results = []
+    results = {'lr': [], 'momentum': [], 'val_loss': [], 'val_acc': []}
 
     for cfg in configs:
         model = model_fn(device)
         optimizer = optim.SGD(model.parameters(), lr=cfg['lr'], momentum=cfg['momentum'])
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=cfg['T_max'])
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
 
         best_loss = float('inf')
         patience_counter = 0
 
-        print(f"Training with lr={cfg['lr']}, momentum={cfg['momentum']}, T_max={cfg['T_max']}...")
+        print(f"Training with lr={cfg['lr']}, momentum={cfg['momentum']}...")
         for epoch in range(10):  # Small number of epochs for quick grid search
             train(model, train_loader, optimizer, criterion, device)
             val_loss, val_acc = evaluate(model, val_loader, criterion, device)
@@ -34,17 +34,16 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
                 print("  Early stopping")
                 break
 
-        results.append((cfg['lr'], cfg['momentum'], cfg['T_max'], val_loss, val_acc))
+        results['lr'].append(cfg['lr'])
+        results['momentum'].append(cfg['momentum'])
+        results['val_loss'].append(val_loss)
+        results['val_acc'].append(val_acc)
 
         if val_acc > best_acc:
             best_acc = val_acc
-            best_cfg = (cfg['lr'], cfg['momentum'], cfg['T_max'])
-            best_model_state = {
-                'model': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'scheduler': scheduler.state_dict(),
-            }
+            best_cfg = (cfg['lr'], cfg['momentum'])
+            best_model_state = model.state_dict()
 
 
-    print(f"Best val acc: {best_acc:.4f} with lr={best_cfg[0]}, momentum={best_cfg[1]}, T_max={best_cfg[2]}")
+    print(f"Best val acc: {best_acc:.4f} with lr={best_cfg[0]}, momentum={best_cfg[1]}")
     return best_cfg, best_model_state, results
