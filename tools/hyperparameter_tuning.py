@@ -30,7 +30,7 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
             else:
                 patience_counter += 1
 
-            if patience_counter >= 5:
+            if patience_counter >= 3:
                 print("  Early stopping")
                 break
 
