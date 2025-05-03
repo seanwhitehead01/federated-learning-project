@@ -24,7 +24,7 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
             
             print(f"  Epoch {epoch+1}: Val Loss = {val_loss:.4f}, Val Acc = {val_acc:.4f}")
             
-            if val_loss < best_loss - 1e-3:
+            if val_loss < best_loss - 5e-3:
                 best_loss = val_loss
                 patience_counter = 0
             else:
