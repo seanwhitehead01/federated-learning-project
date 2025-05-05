@@ -5,7 +5,6 @@ from train import train
 def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, device):
     best_acc = 0
     best_cfg = None
-    best_model_state = None
     results = {'lr': [], 'momentum': [], 'val_loss': [], 'val_acc': []}
 
     for cfg in configs:
@@ -42,8 +41,7 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
         if val_acc > best_acc:
             best_acc = val_acc
             best_cfg = (cfg['lr'], cfg['momentum'])
-            best_model_state = model.state_dict()
 
 
     print(f"Best val acc: {best_acc:.4f} with lr={best_cfg[0]}, momentum={best_cfg[1]}")
-    return best_cfg, best_model_state, results
+    return best_cfg, results
