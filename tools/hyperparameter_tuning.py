@@ -11,13 +11,13 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
     for cfg in configs:
         model = model_fn(device)
         optimizer = optim.SGD(model.parameters(), lr=cfg['lr'], momentum=cfg['momentum'])
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5)
 
         best_loss = float('inf')
         patience_counter = 0
 
         print(f"Training with lr={cfg['lr']}, momentum={cfg['momentum']}...")
-        for epoch in range(10):  # Small number of epochs for quick grid search
+        for epoch in range(5):  # Small number of epochs for quick grid search
             train(model, train_loader, optimizer, criterion, device)
             val_loss, val_acc = evaluate(model, val_loader, criterion, device)
             scheduler.step()
