@@ -40,8 +40,8 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
 
         if val_acc > best_acc:
             best_acc = val_acc
-            best_cfg = (cfg['lr'], cfg['momentum'])
+            best_cfg = cfg
 
 
-    print(f"Best val acc: {best_acc:.4f} with lr={best_cfg[0]}, momentum={best_cfg[1]}")
+    print(f"Best val acc: {best_acc:.4f} with lr={best_cfg['lr']}, momentum={best_cfg['momentum']}")
     return best_cfg, results
