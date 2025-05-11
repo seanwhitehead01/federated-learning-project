@@ -1,4 +1,4 @@
-import train
+from train import train
 
 def clientUpdate(client_dataloader, model, current_state, optimizer, device, epochs, criterion): # function to excute training on a single dataloader
     model.load_state_dict(current_state)
