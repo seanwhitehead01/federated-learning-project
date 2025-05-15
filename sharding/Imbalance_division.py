@@ -53,6 +53,10 @@ def data_division(train_dataset, test_dataset, type_sharding, flagTest = 0, batc
             random.shuffle(indices)
             
         if flagTest == 1: 
+            sharding_datasetsTest = []
+            cardinality_datasetsTest = [] 
+            sharding_dataloadersTest = []
+            total_indicesTest = [[] for _ in range(100)]
             class_to_indicesTest = defaultdict(list)
             
             for idx, (_, label) in enumerate(test_dataset): # divide il dataset in indici in base al label 
@@ -73,11 +77,7 @@ def data_division(train_dataset, test_dataset, type_sharding, flagTest = 0, batc
             
             # test's part 
             if flagTest == 1: 
-                sharding_datasetsTest = []
-                cardinality_datasetsTest = [] 
-                sharding_dataloadersTest = []
-                total_indicesTest = [[] for _ in range(100)]
-                indicesTest = class_to_indicesTest[class_id] # call indices of class id in test dataset -
+                indicesTest = class_to_indicesTest[class_id] # indicesTest
                 m = len(indicesTest)
                 chunk_sizeTest = m // type_sharding
                 remainderTest = m % type_sharding
