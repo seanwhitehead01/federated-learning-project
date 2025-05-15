@@ -53,7 +53,7 @@ def data_division(train_dataset, test_dataset, type_sharding, flagTest = 0, batc
             random.shuffle(indices)
             
         if flagTest == 1: 
-            class_to_indicesTest = []
+            class_to_indicesTest = defaultdict(list)
             
             for idx, (_, label) in enumerate(test_dataset): # divide il dataset in indici in base al label 
                 class_to_indicesTest[label].append(idx)
