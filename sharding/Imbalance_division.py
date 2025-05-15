@@ -51,6 +51,16 @@ def data_division(train_dataset, test_dataset, type_sharding, flagTest = 0, batc
 
         for indices in class_to_indices.values(): # restituisce liste di indici per ogni classe 
             random.shuffle(indices)
+            
+        if flagTest == 1: 
+            class_to_indicesTest = []
+            
+            for idx, (_, label) in enumerate(test_dataset): # divide il dataset in indici in base al label 
+                class_to_indicesTest[label].append(idx)
+
+            for indices in class_to_indicesTest.values(): # restituisce liste di indici per ogni classe 
+                random.shuffle(indices)
+
 
         for class_id,indices in class_to_indices.items(): # class_id identifica dizionario, indices è lista 
             total = sum(counter_classes) 
@@ -67,7 +77,7 @@ def data_division(train_dataset, test_dataset, type_sharding, flagTest = 0, batc
                 cardinality_datasetsTest = [] 
                 sharding_dataloadersTest = []
                 total_indicesTest = [[] for _ in range(100)]
-                indicesTest = class_to_indicesTest(class_id) # call indices of class id in test dataset 
+                indicesTest = class_to_indicesTest[class_id] # call indices of class id in test dataset 
                 m = len(indices)
                 chunk_sizeTest = m // type_sharding
                 remainderTest = m % type_sharding
@@ -91,7 +101,7 @@ def data_division(train_dataset, test_dataset, type_sharding, flagTest = 0, batc
                 if flagTest == 1: 
                     extraTest = 1 if j < remainderTest else 0
                     endTest = startTest + chunk_sizeTest + extraTest
-                    total_indicesTest[random_index].extend(indices[startTest:endTest]) # aggiungiamo indici relativi ad una certa classe - con append diventava lista di indici 
+                    total_indicesTest[random_index].extend(indicesTest[startTest:endTest]) # aggiungiamo indici relativi ad una certa classe - con append diventava lista di indici 
                     startTest = endTest
                 
         for i in range(100): 
