@@ -9,7 +9,7 @@ def get_trainable_keys(model):
 def train_on_client(client_id, model, train_loader, epochs, criterion, device):
     print(f"  Training on client {client_id + 1}")
     model_copy = copy.deepcopy(model)
-    optimizer = optim.SGD(model_copy.parameters(), lr=0.01, momentum=0.9)
+    optimizer = optim.SGD(model_copy.parameters(), lr=0.01)
     for epoch in range(epochs):
         print(f"    Epoch {epoch + 1}/{epochs}")
         train_loss, train_acc = train(model_copy, train_loader, optimizer, criterion, device)

@@ -59,7 +59,7 @@ def get_cifar100_loaders(batch_size=64, val_split=0.1):
 def get_federated_cifar100_dataloaders(
     num_clients,
     num_classes_per_client,
-    batch_size=64,
+    batch_size=50,
     seed=42,
     class_balanced=True
 ):
