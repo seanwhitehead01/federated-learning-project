@@ -100,13 +100,17 @@ def get_federated_cifar100_dataloaders(
     client_class_map = [set() for _ in range(num_clients)]
 
     for client_id in range(num_clients):
+        i = 0
         while len(client_class_map[client_id]) < num_classes_per_client:
-            if not class_pool:
+            if i >= len(class_pool):
                 raise RuntimeError("Insufficient class slots to assign classes to all clients.")
-            cls = class_pool.pop()
+            cls = class_pool[i]
             if client_id not in class_client_map[cls]:
                 client_class_map[client_id].add(cls)
                 class_client_map[cls].append(client_id)
+                class_pool.pop(i)
+            else:
+                i += 1
 
     # === Allocate training data ===
     used_train_indices = set()
