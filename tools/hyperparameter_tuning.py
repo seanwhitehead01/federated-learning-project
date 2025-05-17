@@ -10,7 +10,15 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
     for cfg in configs:
         model = model_fn(device)
         optimizer = optim.SGD(model.parameters(), lr=cfg['lr'], momentum=cfg['momentum'])
-        scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5)
+        
+        if cfg['scheduler'] == 'cosine':
+            scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5)
+        elif cfg['scheduler'] == 'linear':
+            scheduler = optim.lr_scheduler.LinearLR(optimizer, start_factor=1.0, total_iters=5)
+        elif cfg['scheduler'] == 'exp':
+            scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+        else:
+            raise ValueError("Unsupported scheduler type")
 
         best_loss = float('inf')
         patience_counter = 0
@@ -44,4 +52,5 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
 
 
     print(f"Best val acc: {best_acc:.4f} with lr={best_cfg['lr']}, momentum={best_cfg['momentum']}")
-    return best_cfg, results
+    best_results = {'cfg': best_cfg, 'accuracy': best_acc}
+    return best_results, results
