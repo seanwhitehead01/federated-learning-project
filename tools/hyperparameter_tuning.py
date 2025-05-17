@@ -23,7 +23,7 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
         best_loss = float('inf')
         patience_counter = 0
 
-        print(f"Training with lr={cfg['lr']}, momentum={cfg['momentum']}...")
+        print(f"Training with lr={cfg['lr']}, momentum={cfg['momentum']}, scheduler={cfg['scheduler']}...")
         for epoch in range(5):  # Small number of epochs for quick grid search
             train(model, train_loader, optimizer, criterion, device)
             val_loss, val_acc = evaluate(model, val_loader, criterion, device)
