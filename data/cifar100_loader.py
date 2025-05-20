@@ -61,7 +61,8 @@ def get_federated_cifar100_dataloaders(
     num_classes_per_client,
     batch_size=50,
     seed=42,
-    class_balanced=True
+    class_balanced=True,
+    federatedTest=False
 ):
     random.seed(seed)
     torch.manual_seed(seed)
@@ -141,36 +142,40 @@ def get_federated_cifar100_dataloaders(
             client_train_indices[client_id].extend(selected)
 
     # === Allocate test data ===
-    used_test_indices = set()
-    client_test_indices = [[] for _ in range(num_clients)]
+    if federatedTest:
+        used_test_indices = set()
+        client_test_indices = [[] for _ in range(num_clients)]
 
-    for cls, clients_with_class in class_client_map.items():
-        available = [i for i in test_class_indices[cls] if i not in used_test_indices]
-        n = len(available)
-        if n < len(clients_with_class):
-            raise ValueError(f"Not enough test samples for class {cls}")
-        chunk_size = n // len(clients_with_class)
-        remainder = n % len(clients_with_class)
-        start = 0
-        for i, client_id in enumerate(clients_with_class):
-            extra = 1 if i < remainder else 0
-            end = start + chunk_size + extra
-            selected = available[start:end]
-            used_test_indices.update(selected)
-            client_test_indices[client_id].extend(selected)
-            start = end
+        for cls, clients_with_class in class_client_map.items():
+            available = [i for i in test_class_indices[cls] if i not in used_test_indices]
+            n = len(available)
+            if n < len(clients_with_class):
+                raise ValueError(f"Not enough test samples for class {cls}")
+            chunk_size = n // len(clients_with_class)
+            remainder = n % len(clients_with_class)
+            start = 0
+            for i, client_id in enumerate(clients_with_class):
+                extra = 1 if i < remainder else 0
+                end = start + chunk_size + extra
+                selected = available[start:end]
+                used_test_indices.update(selected)
+                client_test_indices[client_id].extend(selected)
+                start = end
 
     # === Create dataloaders ===
     train_loaders = []
-    test_loaders = []
     for i in range(num_clients):
         train_subset = Subset(train_dataset, client_train_indices[i])
-        test_subset = Subset(test_dataset, client_test_indices[i])
-
         train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-        test_loader = DataLoader(test_subset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
-
         train_loaders.append(train_loader)
-        test_loaders.append(test_loader)
+    
+    if federatedTest:
+        test_loaders = []
+        for i in range(num_clients):
+            test_subset = Subset(test_dataset, client_test_indices[i])
+            test_loader = DataLoader(test_subset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+            test_loaders.append(test_loader)
+    else:
+        test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     return train_loaders, test_loaders, client_class_map
