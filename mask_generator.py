@@ -37,19 +37,21 @@ def score(model, dataloader, mask, device, trainable_params):
     return s
 
 def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
-    trainable_params = get_trainable_params(model)
+    trainable_params = get_trainable_params(model) 
     mask = {id(p): torch.ones_like(p) for p in trainable_params}
 
     model_copy = copy.deepcopy(model).to(device)
 
     for r in range(rounds):
-        to_keep = sparsity ** (r / rounds)
+        to_keep = sparsity ** ((r + 1) / rounds)
         s = score(model_copy, dataloader, mask, device, trainable_params)
 
         # Flatten all scores
         all_scores = torch.cat([v.flatten() for v in s.values()])
         k = floor(len(all_scores) * to_keep)
+        print(f"Round {r + 1}/{rounds}, keeping {to_keep:.2%} of parameters, k={k}")
         threshold = torch.kthvalue(all_scores, k).values.item()
+        print(f"Threshold: {threshold}")
 
         # Update masks
         for p in trainable_params:
@@ -63,4 +65,4 @@ def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
                 if id(p) in mask:
                     p.data *= mask[id(p)]
 
-    return mask
+    return mask, s
