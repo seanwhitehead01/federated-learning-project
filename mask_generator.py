@@ -8,9 +8,8 @@ from tqdm import tqdm
 def get_trainable_params(model):
     return [p for p in model.parameters() if p.requires_grad]
 
-def score(model, dataloader, mask, device):
+def score(model, dataloader, mask, device, trainable_params):
     softmax = nn.Softmax(dim=1)
-    trainable_params = get_trainable_params(model)
     s = {id(p): torch.zeros_like(p) for p in trainable_params}
     
     model.eval()
@@ -45,7 +44,7 @@ def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
 
     for r in range(rounds):
         to_keep = sparsity ** (r / rounds)
-        s = score(model_copy, dataloader, mask, device)
+        s = score(model_copy, dataloader, mask, device, trainable_params)
 
         # Flatten all scores
         all_scores = torch.cat([v.flatten() for v in s.values()])
