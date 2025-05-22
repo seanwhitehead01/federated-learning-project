@@ -1,61 +1,67 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
-from torch.autograd import grad
-from models.federated_averaging import get_trainable_keys
-from math import floor
 import copy
+from math import floor
+from tqdm import tqdm
 
+def get_trainable_params(model):
+    return [p for p in model.parameters() if p.requires_grad]
 
-def score(model, dataloader, mask, device): 
+def score(model, dataloader, mask, device):
     softmax = nn.Softmax(dim=1)
-    trainable_keys = get_trainable_keys(model)
-    s = {key: 0 for key in trainable_keys} 
+    trainable_params = get_trainable_params(model)
+    s = {id(p): torch.zeros_like(p) for p in trainable_params}
     
-    for inputs, _ in dataloader:
+    model.eval()
+    for inputs, _ in tqdm(dataloader, desc="Scoring"):
         inputs = inputs.to(device)
-        logits = model(inputs)  
-        probs = softmax(logits)  
+
+        logits = model(inputs)
+        probs = softmax(logits)
         samples = torch.multinomial(probs, num_samples=1).squeeze(1)
+
         log_probs = F.log_softmax(logits, dim=1)
-        batch_idx = torch.arange(inputs.size(0), device=device)
-        log_prob_sampled = log_probs[batch_idx, samples]     
+        log_prob_sampled = log_probs[torch.arange(inputs.size(0), device=device), samples]
+        loss = log_prob_sampled.mean()  # average over batch
         model.zero_grad()
-        log_prob_sampled.backward() 
-            
-        for name, param in model.named_parameters(): # key == name
-            if name in s:  
-                s[name] = s[name] + param.grad ** 2
-                
-    for name in mask:
-        if mask[name] == 0:
-            s[name] = float('inf')
-            
+        loss.backward()
+
+        for p in trainable_params:
+            if p.grad is not None:
+                s[id(p)] += (p.grad.detach() ** 2)
+
+    for p in trainable_params:
+        if id(p) in mask:
+            s[id(p)][mask[id(p)] == 0] = float('inf')  # Ignore pruned params
+
     return s
-    
-    
-def mask_calculator(model, dataloader, rounds, sparsity, device):
-    trainable_keys = get_trainable_keys(model) 
+
+def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
+    trainable_params = get_trainable_params(model)
+    mask = {id(p): torch.ones_like(p) for p in trainable_params}
+
     model_copy = copy.deepcopy(model).to(device)
-    m = len(trainable_keys)
-    mask = {key: 1 for key in trainable_keys}  
 
-
-    for r in range(rounds):        
+    for r in range(rounds):
         to_keep = sparsity ** (r / rounds)
         s = score(model_copy, dataloader, mask, device)
-        
-        p = floor(m*to_keep) 
-        s_hat = sorted(s.items(), key=lambda item: item[1],  reverse=True)
-        _, pth_value = s_hat[p - 1]
-            
-        for name in trainable_keys:
-            if s[name] - pth_value > 0: 
-                mask[name] = 0
-            
-        # parameter update - Hadamard Product 
-        for name, param in model_copy.named_parameters():
-            if name in mask: 
-                param.data *= mask[name]  
-    
-    return mask 
+
+        # Flatten all scores
+        all_scores = torch.cat([v.flatten() for v in s.values()])
+        k = floor(len(all_scores) * to_keep)
+        threshold = torch.kthvalue(all_scores, k).values.item()
+
+        # Update masks
+        for p in trainable_params:
+            score_tensor = s[id(p)]
+            new_mask = (score_tensor <= threshold).float()
+            mask[id(p)] = new_mask
+
+        # Apply new mask to model_copy
+        with torch.no_grad():
+            for p in model_copy.parameters():
+                if id(p) in mask:
+                    p.data *= mask[id(p)]
+
+    return mask

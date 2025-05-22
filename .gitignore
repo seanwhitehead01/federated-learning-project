@@ -173,6 +173,7 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 centralized_test.ipynb
+centralized_baseline.ipynb
 data/cifar-100-python.tar.gz
 data/cifar-100-python/file.txt~
 data/cifar-100-python/meta
