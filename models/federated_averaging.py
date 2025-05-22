@@ -3,7 +3,6 @@ from train import train
 import copy
 
 def get_trainable_keys(model):
-    print(len({name for name, param in model.named_parameters() if param.requires_grad}))
     return {name for name, param in model.named_parameters() if param.requires_grad}
 
 
