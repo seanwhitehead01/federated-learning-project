@@ -104,15 +104,68 @@ def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
     #             if id(p) in mask:
     #                 p.data *= mask[id(p)]
 
-    model_copy = copy.deepcopy(model).to(device)
-    s = compute_fisher_diagonal(model_copy, dataloader, device, num_samples=100)
-    all_scores = torch.cat([v.flatten() for v in s.values()])
-    k = floor(len(all_scores) * (1 - sparsity))
-    threshold = torch.kthvalue(all_scores, k).values.item()
+    # model_copy = copy.deepcopy(model).to(device)
+    # s = compute_fisher_diagonal(model_copy, dataloader, device, num_samples=100)
+    # all_scores = torch.cat([v.flatten() for v in s.values()])
+    # k = floor(len(all_scores) * (1 - sparsity))
+    # threshold = torch.kthvalue(all_scores, k).values.item()
 
     
-    mask = {}
-    for name, score_tensor in s.items():
-        mask[name] = (score_tensor <= threshold).float()
+    # mask = {}
+    # for name, score_tensor in s.items():
+    #     mask[name] = (score_tensor <= threshold).float()
 
-    return mask, s
+    model_copy = copy.deepcopy(model).to(device)
+    model_copy.eval()
+    
+    # Get trainable parameters
+    params = [p for p in model_copy.parameters() if p.requires_grad]
+    param_names = [name for name, p in model_copy.named_parameters() if p.requires_grad]
+    param_map = {name: p for name, p in model_copy.named_parameters() if p.requires_grad}
+    mask = {name: torch.ones_like(p, dtype=torch.float32) for name, p in param_map.items()}
+
+    for r in range(1, rounds + 1):
+        print(f"\n[Round {r}/{rounds}]")
+
+        # Step 1: Compute Fisher Scores (diagonal approximation)
+        fisher = {name: torch.zeros_like(p) for name, p in param_map.items()}
+
+        for inputs, _ in tqdm(dataloader, desc=f"Computing Fisher (Round {r})"):
+            inputs = inputs.to(device)
+            logits = model_copy(inputs)
+            probs = F.softmax(logits, dim=1)
+            sampled_y = torch.multinomial(probs, 1).squeeze(1)
+            log_probs = F.log_softmax(logits, dim=1)
+            logp = log_probs[torch.arange(inputs.size(0)), sampled_y]
+
+            loss = -logp.mean()
+            model_copy.zero_grad()
+            loss.backward()
+
+            for name, p in param_map.items():
+                if p.grad is not None:
+                    fisher[name] += (p.grad.detach() ** 2)
+
+        # Normalize Fisher scores
+        for name in fisher:
+            fisher[name] /= len(dataloader)
+
+        # Step 2: Apply new sparsity level
+        all_scores = torch.cat([f.flatten() for f in fisher.values()])
+        m = all_scores.numel()
+        keep_ratio = sparsity ** (r / rounds)
+        k = floor(m * keep_ratio)
+
+        threshold = torch.kthvalue(all_scores, k).values.item()
+        print(f"  → Keeping top {k} params (threshold = {threshold:.2e})")
+
+        # Step 3: Update masks
+        for name in fisher:
+            mask[name] = (fisher[name] <= threshold).float()
+
+        # Step 4: Apply mask to model weights (hard mask)
+        with torch.no_grad():
+            for name, p in param_map.items():
+                p.data *= mask[name]
+
+    return mask
