@@ -75,7 +75,7 @@ def compute_fisher_diagonal(model, dataloader, device='cuda', num_samples=None):
 
     return fisher
 
-def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
+def mask_calculator(model, dataset, device, rounds=5, sparsity=0.5):
     # trainable_params = get_trainable_params(model) 
     # mask = {id(p): torch.ones_like(p) for p in trainable_params}
 
@@ -115,12 +115,56 @@ def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
     # for name, score_tensor in s.items():
     #     mask[name] = (score_tensor <= threshold).float()
 
+    # model_copy = copy.deepcopy(model).to(device)
+    # model_copy.eval()
+    
+    # # Get trainable parameters
+    # param_map = {name: p for name, p in model_copy.named_parameters() if p.requires_grad}
+    # mask = {name: torch.ones_like(p, dtype=torch.float32) for name, p in param_map.items()}
+
+    # for r in range(1, rounds + 1):
+    #     print(f"\n[Round {r}/{rounds}]")
+
+    #     # Step 1: Compute Fisher Scores (diagonal approximation)
+    #     fisher = {name: torch.zeros_like(p) for name, p in param_map.items()}
+
+    #     for inputs, _ in tqdm(dataloader, desc=f"Computing Fisher (Round {r})"):
+    #         inputs = inputs.to(device)
+    #         logits = model_copy(inputs)
+    #         probs = F.softmax(logits, dim=1)
+    #         sampled_y = torch.multinomial(probs, 1).squeeze(1)
+    #         log_probs = F.log_softmax(logits, dim=1)
+    #         log_probs_samples = log_probs[torch.arange(inputs.size(0)), sampled_y]
+
+    #         loss = -log_probs_samples.mean()
+    #         model_copy.zero_grad()
+    #         loss.backward()
+
+    #         for name, p in param_map.items():
+    #             if p.grad is not None:
+    #                 fisher[name] += (p.grad.detach() ** 2)
+
+    #     # Step 2: Apply new sparsity level
+    #     all_scores = torch.cat([f.flatten() for f in fisher.values()])
+    #     m = all_scores.numel()
+    #     keep_ratio = sparsity ** (r / rounds)
+    #     k = floor(m * keep_ratio)
+
+    #     threshold = torch.kthvalue(all_scores, k).values.item()
+    #     print(f"  → Keeping top {k} params (threshold = {threshold:.2e})")
+
+    #     # Step 3: Update masks
+    #     for name in fisher:
+    #         mask[name] = (fisher[name] <= threshold).float()
+
+    #     # Step 4: Apply mask to model weights (hard mask)
+    #     with torch.no_grad():
+    #         for name, p in param_map.items():
+    #             p.data *= mask[name]
+
     model_copy = copy.deepcopy(model).to(device)
     model_copy.eval()
-    
     # Get trainable parameters
-    params = [p for p in model_copy.parameters() if p.requires_grad]
-    param_names = [name for name, p in model_copy.named_parameters() if p.requires_grad]
     param_map = {name: p for name, p in model_copy.named_parameters() if p.requires_grad}
     mask = {name: torch.ones_like(p, dtype=torch.float32) for name, p in param_map.items()}
 
@@ -128,28 +172,7 @@ def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
         print(f"\n[Round {r}/{rounds}]")
 
         # Step 1: Compute Fisher Scores (diagonal approximation)
-        fisher = {name: torch.zeros_like(p) for name, p in param_map.items()}
-
-        for inputs, _ in tqdm(dataloader, desc=f"Computing Fisher (Round {r})"):
-            inputs = inputs.to(device)
-            logits = model_copy(inputs)
-            probs = F.softmax(logits, dim=1)
-            sampled_y = torch.multinomial(probs, 1).squeeze(1)
-            log_probs = F.log_softmax(logits, dim=1)
-            logp = log_probs[torch.arange(inputs.size(0)), sampled_y]
-
-            loss = -logp.mean()
-            model_copy.zero_grad()
-            loss.backward()
-
-            for name, p in param_map.items():
-                if p.grad is not None:
-                    fisher[name] += (p.grad.detach() ** 2)
-
-        # Normalize Fisher scores
-        for name in fisher:
-            fisher[name] /= len(dataloader)
-
+        fisher = fisher_elementwise_per_sample(model_copy, dataset, device=device)
         # Step 2: Apply new sparsity level
         all_scores = torch.cat([f.flatten() for f in fisher.values()])
         m = all_scores.numel()
@@ -169,3 +192,37 @@ def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
                 p.data *= mask[name]
 
     return mask
+
+def fisher_elementwise_per_sample(model, dataset, device='cuda', max_samples=None):
+    model.eval()
+    model.to(device)
+
+    # Initialize score accumulator
+    fisher = {name: torch.zeros_like(p) for name, p in model.named_parameters() if p.requires_grad}
+
+    count = 0
+    for x, _ in tqdm(dataset):
+        if max_samples is not None and count >= max_samples:
+            break
+
+        x = x.unsqueeze(0).to(device)  # single input as a batch
+        logits = model(x)
+
+        # Get pseudo-label from model's own prediction
+        probs = F.softmax(logits, dim=1)
+        sampled_y = torch.multinomial(probs, 1).squeeze()
+        log_probs = F.log_softmax(logits, dim=1)
+        logp = log_probs[0, sampled_y]
+
+        # Backward for a single scalar
+        model.zero_grad()
+        (-logp).backward()
+
+        # Accumulate squared gradients (per-element)
+        for name, param in model.named_parameters():
+            if param.requires_grad and param.grad is not None:
+                fisher[name] += (param.grad.detach() ** 2)
+
+        count += 1
+
+    return fisher
