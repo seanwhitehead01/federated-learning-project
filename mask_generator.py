@@ -225,7 +225,7 @@ def fisher_elementwise_per_sample(model, dataloader, device='cuda'):
 
             # Backward to get gradient
             model.zero_grad()
-            loss.backward()
+            loss.backward(retain_graph=True)
 
             # Accumulate squared gradients (per-element)
             for name, param in model.named_parameters():
