@@ -14,7 +14,7 @@ def train(model, loader, optimizer, criterion, device, grad_mask=None):
         # apply mask to gradients
         if grad_mask is not None:
             for name, param in model.named_parameters():
-                if param.grad is not None and name in grad_mask:
+                if param.requires_grad and name in grad_mask:
                     param.grad *= grad_mask[name]
                     
                     
