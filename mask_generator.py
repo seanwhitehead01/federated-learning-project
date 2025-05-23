@@ -75,7 +75,7 @@ def compute_fisher_diagonal(model, dataloader, device='cuda', num_samples=None):
 
     return fisher
 
-def mask_calculator(model, dataset, device, rounds=5, sparsity=0.5):
+def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
     # trainable_params = get_trainable_params(model) 
     # mask = {id(p): torch.ones_like(p) for p in trainable_params}
 
@@ -172,7 +172,7 @@ def mask_calculator(model, dataset, device, rounds=5, sparsity=0.5):
         print(f"\n[Round {r}/{rounds}]")
 
         # Step 1: Compute Fisher Scores (diagonal approximation)
-        fisher = fisher_elementwise_per_sample(model_copy, dataset, device=device)
+        fisher = fisher_elementwise_per_sample(model_copy, dataloader, device=device)
         # Step 2: Apply new sparsity level
         all_scores = torch.cat([f.flatten() for f in fisher.values()])
         m = all_scores.numel()
@@ -193,36 +193,43 @@ def mask_calculator(model, dataset, device, rounds=5, sparsity=0.5):
 
     return mask
 
-def fisher_elementwise_per_sample(model, dataset, device='cuda', max_samples=None):
+def fisher_elementwise_per_sample(model, dataloader, device='cuda'):
     model.eval()
     model.to(device)
 
     # Initialize score accumulator
     fisher = {name: torch.zeros_like(p) for name, p in model.named_parameters() if p.requires_grad}
 
-    count = 0
-    for x, _ in tqdm(dataset):
-        if max_samples is not None and count >= max_samples:
-            break
+    for data, _ in tqdm(dataloader):
 
-        x = x.unsqueeze(0).to(device)  # single input as a batch
-        logits = model(x)
-
-        # Get pseudo-label from model's own prediction
+        data = data.to(device)
+        logits = model(data)
         probs = F.softmax(logits, dim=1)
-        sampled_y = torch.multinomial(probs, 1).squeeze()
+        sampled_y = torch.multinomial(probs, 1).squeeze(1)
         log_probs = F.log_softmax(logits, dim=1)
-        logp = log_probs[0, sampled_y]
+        log_probs_samples = log_probs[torch.arange(data.size(0)), sampled_y]
 
-        # Backward for a single scalar
-        model.zero_grad()
-        (-logp).backward()
+        # x = x.unsqueeze(0).to(device)  # single input as a batch
+        # logits = model(x)
 
-        # Accumulate squared gradients (per-element)
-        for name, param in model.named_parameters():
-            if param.requires_grad and param.grad is not None:
-                fisher[name] += (param.grad.detach() ** 2)
+        # # Get pseudo-label from model's own prediction
+        # probs = F.softmax(logits, dim=1)
+        # sampled_y = torch.multinomial(probs, 1).squeeze()
+        # log_probs = F.log_softmax(logits, dim=1)
+        # logp = log_probs[0, sampled_y]
 
-        count += 1
+        for idx in range(data.size(0)):
+            # Compute log-prob of sampled labels
+            logp = log_probs_samples[idx]
+            loss = -logp.mean()
+
+            # Backward to get gradient
+            model.zero_grad()
+            loss.backward()
+
+            # Accumulate squared gradients (per-element)
+            for name, param in model.named_parameters():
+                if param.requires_grad and param.grad is not None:
+                    fisher[name] += (param.grad.detach() ** 2)
 
     return fisher
