@@ -38,7 +38,7 @@ def fischer_scores(model, dataloader, device, R=1):
 
     return scores
 
-def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
+def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5, R=1):
 
     model_copy = copy.deepcopy(model).to(device)
 
@@ -50,7 +50,7 @@ def mask_calculator(model, dataloader, device, rounds=5, sparsity=0.5):
         print(f"\n[Round {r}/{rounds}]")
 
         # Step 1: Compute Fisher Scores (diagonal approximation)
-        fisher = fischer_scores(model_copy, dataloader, device)
+        fisher = fischer_scores(model_copy, dataloader, device, R=R)
         # Step 2: Apply new sparsity level
         all_scores = torch.cat([f.flatten() for f in fisher.values()])
         m = all_scores.numel()
