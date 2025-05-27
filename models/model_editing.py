@@ -4,26 +4,40 @@ import torch.nn.functional as F
 import copy
 from math import floor
 from tqdm import tqdm
+from collections import defaultdict
 
 # This function computes the un-normalized Fisher scores for each parameter in the model
-def fischer_scores(model, dataloader, device, R=1, mask=None):
+def fischer_scores(model, dataloader, device, R=1, mask=None, N=3, num_classes=100):
     model.eval()
     model.to(device)
 
+    # Initialize fisher scores
     scores = {name: torch.zeros_like(p) for name, p in model.named_parameters() if p.requires_grad}
 
-    for data, _ in tqdm(dataloader, desc="Scoring"):
-        data = data.to(device)
+    # Track how many samples per class have been processed
+    class_counts = defaultdict(int)
 
-        for _ in range(R):
-            logits = model(data)
-            probs = F.softmax(logits, dim=1)
-            sampled_y = torch.multinomial(probs, 1).squeeze(1)
-            log_probs = F.log_softmax(logits, dim=1)
-            logp = log_probs[torch.arange(data.size(0)), sampled_y]
+    for data_batch, labels_batch in tqdm(dataloader, desc="Scoring"):
+        data_batch = data_batch.to(device)
+        labels_batch = labels_batch.to(device)
 
-            for i in range(data.size(0)):
-                loss = -logp[i]
+        for i in range(data_batch.size(0)):
+            x = data_batch[i].unsqueeze(0)  # Single sample
+            y = labels_batch[i].item()
+
+            if class_counts[y] >= N:
+                continue  # Skip if already reached N for this class
+
+            class_counts[y] += 1
+
+            for _ in range(R):
+                logits = model(x)
+                probs = F.softmax(logits, dim=1)
+                sampled_y = torch.multinomial(probs, 1).squeeze(1)
+                log_probs = F.log_softmax(logits, dim=1)
+                logp = log_probs[0, sampled_y]
+
+                loss = -logp
                 model.zero_grad()
                 loss.backward(retain_graph=True)
 
@@ -33,6 +47,10 @@ def fischer_scores(model, dataloader, device, R=1, mask=None):
                         if mask is not None and name in mask:
                             g = g * mask[name].to(g.device)
                         scores[name] += g ** 2
+
+        # Check if we have collected enough samples
+        if all(class_counts[c] >= N for c in range(num_classes)):
+            break
 
     return scores
 
