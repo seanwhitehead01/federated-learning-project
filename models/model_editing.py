@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import copy
 from math import floor
-from tqdm import tqdm
 from collections import defaultdict
 
 # This function computes the un-normalized Fisher scores for each parameter in the model
@@ -17,7 +16,7 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
     # Track how many samples per class have been processed
     class_counts = defaultdict(int)
 
-    for data_batch, labels_batch in tqdm(dataloader, desc="Scoring"):
+    for data_batch, labels_batch in dataloader:
         data_batch = data_batch.to(device)
         labels_batch = labels_batch.to(device)
 
@@ -54,7 +53,7 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
 
     return scores
 
-def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=1, num_classes=100):
+def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=1, num_classes=100, verbose=True):
     model_copy = copy.deepcopy(model).to(device)
     model_copy.eval()
 
@@ -63,7 +62,8 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
     mask = {name: torch.ones_like(p, dtype=torch.float32) for name, p in param_map.items()}
 
     for r in range(1, rounds + 1):
-        print(f"\n[Round {r}/{rounds}]")
+        if verbose:
+            print(f"\n[Round {r}/{rounds}]")
 
         dataloader = torch.utils.data.DataLoader(
             dataset,
@@ -89,7 +89,8 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
         keep_ratio = sparsity ** (r / rounds)
         k = floor(m * keep_ratio)
         threshold = torch.kthvalue(all_scores, k).values.item()
-        print(f"  → Keeping top {k} parameters (threshold = {threshold:.2e})")
+        if verbose:
+            print(f"  → Keeping top {k} parameters (threshold = {threshold:.2e})")
 
         # Step 4: Update mask
         for name in scores:
