@@ -54,7 +54,7 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
 
     return scores
 
-def mask_calculator(model, dataloader, device, rounds=4, sparsity=0.1, R=1, samples_per_class=1, num_classes=100):
+def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=1, num_classes=100):
     model_copy = copy.deepcopy(model).to(device)
     model_copy.eval()
 
@@ -65,13 +65,23 @@ def mask_calculator(model, dataloader, device, rounds=4, sparsity=0.1, R=1, samp
     for r in range(1, rounds + 1):
         print(f"\n[Round {r}/{rounds}]")
 
+        dataloader = torch.utils.data.DataLoader(
+            dataset,
+            batch_size=50,
+            shuffle=True,
+            num_workers=4
+        )
+
         # Step 1: Compute Fisher scores using current mask
         scores = fischer_scores(model_copy, dataloader, device=device, R=R, mask=mask, 
                                 N=samples_per_class, num_classes=num_classes)
 
         # Step 2: Set scores of already masked params to +inf
         for name in scores:
+            # Masked out
             scores[name][mask[name] == 0] = float('inf')
+            # Zero score = unused = not important
+            scores[name][scores[name] == 0] = float('inf')
 
         # Step 3: Rank parameters and determine new threshold
         all_scores = torch.cat([f.flatten() for f in scores.values()])
