@@ -86,7 +86,7 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
 
         # Update mask using bool logic
         for name in scores:
-            new_mask = (scores[name] <= threshold)
+            new_mask = (scores[name] <= threshold).cpu()
             mask[name] = mask[name] & new_mask  # keep only previously active & newly selected
 
         # Apply hard pruning
