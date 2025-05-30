@@ -109,6 +109,7 @@ def freeze_and_clean_client_masks(model, client_mask_dict, threshold=0.01, K=100
     # Freeze parameters not used by any client (i.e., shared_mask == 0)
     frozen_count = 0
     total_count = 0
+    frozen_state = []
 
     for name, param in model.named_parameters():
         if name in shared_mask:
@@ -116,6 +117,7 @@ def freeze_and_clean_client_masks(model, client_mask_dict, threshold=0.01, K=100
             if keep_ratio <= threshold:  # frozen if 0 or below threshold
                 param.requires_grad_(False)
                 frozen_count += 1
+                frozen_state.append(name)
                 for cid in range(K):
                     if name in client_mask_dict[cid]:
                         del client_mask_dict[cid][name]
@@ -125,4 +127,4 @@ def freeze_and_clean_client_masks(model, client_mask_dict, threshold=0.01, K=100
         print(f"→ Frozen {frozen_count}/{total_count} parameters (based on logical OR across clients)")
         print(f"→ Removed frozen params from all client masks to save memory")
 
-    return client_mask_dict
+    return client_mask_dict, frozen_state
