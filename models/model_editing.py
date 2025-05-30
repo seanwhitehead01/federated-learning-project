@@ -94,16 +94,35 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
             for name, p in param_map.items():
                 p.data *= mask[name].to(dtype=p.dtype, device=p.device)
 
-    # Freeze fully masked parameters
-    threshold = 0.01
-    masked_layers = 0
-    original_param_map = {name: p for name, p in model.named_parameters() if p.requires_grad}
-    for name, p in original_param_map.items():
-        if mask[name].sum().item() / mask[name].numel() < threshold:
-            p.requires_grad = False
-            masked_layers += 1
-            del mask[name]
+    return mask
+
+def freeze_and_clean_client_masks(model, client_mask_dict, threshold=0.01, K=100, verbose=True):
+    # Initialize shared mask with all False (fully masked)
+    first_mask = client_mask_dict[0]
+    shared_mask = {name: mask.clone() for name, mask in first_mask.items()}
+
+    for cid in range(K):
+        client_mask = client_mask_dict[cid]
+        for name in shared_mask:
+            shared_mask[name] |= client_mask.get(name, torch.zeros_like(shared_mask[name], dtype=torch.bool))
+
+    # Freeze parameters not used by any client (i.e., shared_mask == 0)
+    frozen_count = 0
+    total_count = 0
+
+    for name, param in model.named_parameters():
+        if name in shared_mask:
+            keep_ratio = shared_mask[name].sum().item() / shared_mask[name].numel()
+            if keep_ratio <= threshold:  # frozen if 0 or below threshold
+                param.requires_grad_(False)
+                frozen_count += 1
+                for cid in range(K):
+                    if name in client_mask_dict[cid]:
+                        del client_mask_dict[cid][name]
+            total_count += 1
 
     if verbose:
-        print(f"  → {masked_layers} layers frozen due to masking (threshold = {threshold})")
-    return mask
+        print(f"→ Frozen {frozen_count}/{total_count} parameters (based on logical OR across clients)")
+        print(f"→ Removed frozen params from all client masks to save memory")
+
+    return client_mask_dict
