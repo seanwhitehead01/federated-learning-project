@@ -1,3 +1,4 @@
+import torch
 import torch.optim as optim
 from train import train_steps
 import copy
@@ -6,8 +7,16 @@ def get_trainable_keys(model):
     return {name for name, param in model.named_parameters() if param.requires_grad}
 
 
-def train_on_client(client_id, model, train_loader, steps, criterion, device, mask=None):
+def train_on_client(client_id, model, train_dataset, steps, criterion, device, mask=None):
     print(f"  Training on client {client_id + 1}")
+
+    train_loader = torch.utils.data.DataLoader(
+        train_dataset,
+        batch_size=50,
+        shuffle=True,
+        num_workers=4
+    )
+    
     model_copy = copy.deepcopy(model)
     optimizer = optim.SGD(model_copy.parameters(), lr=0.01)
     train_loss, train_acc = train_steps(model_copy, train_loader, optimizer, criterion, device, steps, mask)
