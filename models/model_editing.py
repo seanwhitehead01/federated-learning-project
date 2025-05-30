@@ -8,7 +8,7 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
     model.eval()
     model.to(device)
 
-    scores = {name: torch.zeros_like(p, device='cpu') for name, p in model.named_parameters() if p.requires_grad}
+    scores = {name: torch.zeros_like(p) for name, p in model.named_parameters() if p.requires_grad}
     class_counts = defaultdict(int)
 
     for data_batch, labels_batch in dataloader:
@@ -36,9 +36,9 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
 
                 for name, param in model.named_parameters():
                     if param.requires_grad and param.grad is not None:
-                        g = param.grad.detach().cpu()
+                        g = param.grad.detach()
                         if mask is not None and name in mask:
-                            g = g * mask[name].float().cpu()
+                            g = g * mask[name].float()
                         scores[name] += g ** 2
 
         if all(class_counts[c] >= N for c in range(num_classes)):
@@ -86,7 +86,7 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
 
         # Update mask using bool logic
         for name in scores:
-            new_mask = (scores[name] <= threshold).cpu()
+            new_mask = (scores[name] <= threshold)
             mask[name] = mask[name] & new_mask  # keep only previously active & newly selected
 
         # Apply hard pruning
