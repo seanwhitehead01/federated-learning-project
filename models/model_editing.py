@@ -1,19 +1,14 @@
+from collections import defaultdict
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 import copy
 from math import floor
-from collections import defaultdict
 
-# This function computes the un-normalized Fisher scores for each parameter in the model
 def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=100):
     model.eval()
     model.to(device)
 
-    # Initialize fisher scores
-    scores = {name: torch.zeros_like(p) for name, p in model.named_parameters() if p.requires_grad}
-
-    # Track how many samples per class have been processed
+    scores = {name: torch.zeros_like(p, device='cpu') for name, p in model.named_parameters() if p.requires_grad}
     class_counts = defaultdict(int)
 
     for data_batch, labels_batch in dataloader:
@@ -21,12 +16,11 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
         labels_batch = labels_batch.to(device)
 
         for i in range(data_batch.size(0)):
-            x = data_batch[i].unsqueeze(0)  # Single sample
+            x = data_batch[i].unsqueeze(0)
             y = labels_batch[i].item()
 
             if class_counts[y] >= N:
-                continue  # Skip if already reached N for this class
-
+                continue
             class_counts[y] += 1
 
             for _ in range(R):
@@ -42,12 +36,11 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
 
                 for name, param in model.named_parameters():
                     if param.requires_grad and param.grad is not None:
-                        g = param.grad.detach()
+                        g = param.grad.detach().cpu()
                         if mask is not None and name in mask:
-                            g = g * mask[name].to(g.device)
+                            g = g * mask[name].float().cpu()
                         scores[name] += g ** 2
 
-        # Check if we have collected enough samples
         if all(class_counts[c] >= N for c in range(num_classes)):
             break
 
@@ -57,9 +50,8 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
     model_copy = copy.deepcopy(model).to(device)
     model_copy.eval()
 
-    # Initialize masks and param references
     param_map = {name: p for name, p in model_copy.named_parameters() if p.requires_grad}
-    mask = {name: torch.ones_like(p, dtype=torch.float32) for name, p in param_map.items()}
+    mask = {name: torch.ones_like(p, dtype=torch.bool) for name, p in param_map.items()}
 
     for r in range(1, rounds + 1):
         if verbose:
@@ -72,18 +64,18 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
             num_workers=4
         )
 
-        # Step 1: Compute Fisher scores using current mask
-        scores = fischer_scores(model_copy, dataloader, device=device, R=R, mask=mask, 
-                                N=samples_per_class, num_classes=num_classes)
+        scores = fischer_scores(
+            model_copy, dataloader, device=device, R=R,
+            mask=mask, N=samples_per_class, num_classes=num_classes
+        )
 
-        # Step 2: Set scores of already masked params to +inf
+        # Set +inf to already masked or zero-score elements
         for name in scores:
-            # Masked out
-            scores[name][mask[name] == 0] = float('inf')
-            # Zero score = unused = not important
+            float_mask = mask[name].float()
+            scores[name][float_mask == 0] = float('inf')
             scores[name][scores[name] == 0] = float('inf')
 
-        # Step 3: Rank parameters and determine new threshold
+        # Flatten and rank scores
         all_scores = torch.cat([f.flatten() for f in scores.values()])
         m = all_scores.numel()
         keep_ratio = sparsity ** (r / rounds)
@@ -92,14 +84,26 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
         if verbose:
             print(f"  → Keeping top {k} parameters (threshold = {threshold:.2e})")
 
-        # Step 4: Update mask
+        # Update mask using bool logic
         for name in scores:
-            new_mask = (scores[name] <= threshold).float()
-            mask[name] = mask[name] * new_mask  # Progressive shrinking
+            new_mask = (scores[name] <= threshold)
+            mask[name] = mask[name] & new_mask  # keep only previously active & newly selected
 
-        # Step 5: Apply mask to weights (hard pruning)
+        # Apply hard pruning
         with torch.no_grad():
             for name, p in param_map.items():
-                p.data *= mask[name]
+                p.data *= mask[name].to(dtype=p.dtype, device=p.device)
 
+    # Freeze fully masked parameters
+    threshold = 0.01
+    masked_layers = 0
+    original_param_map = {name: p for name, p in model.named_parameters() if p.requires_grad}
+    for name, p in original_param_map.items():
+        if mask[name].sum().item() / mask[name].numel() < threshold:
+            p.requires_grad = False
+            masked_layers += 1
+            del mask[name]
+
+    if verbose:
+        print(f"  → {masked_layers} layers frozen due to masking (threshold = {threshold})")
     return mask
