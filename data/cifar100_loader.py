@@ -62,8 +62,7 @@ def get_federated_cifar100_dataloaders(
     batch_size=50,
     seed=42,
     class_balanced=True,
-    federatedTest=False,
-    validation=False
+    federatedTest=False
 ):
     random.seed(seed)
     torch.manual_seed(seed)
@@ -81,7 +80,7 @@ def get_federated_cifar100_dataloaders(
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
     ])
-    train_dataset = datasets.CIFAR100(root='./data', train=True, download=True, transform=None)
+    train_dataset = datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
     test_dataset = datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
 
     def group_by_class(dataset):
@@ -166,13 +165,9 @@ def get_federated_cifar100_dataloaders(
 
     # === Create dataloaders & datasets ===
     train_datasets = []
-    if validation:
-        val_datasets = []
     for i in range(num_clients):
         train_subset = Subset(train_dataset, client_train_indices[i])
-        train_datasets.append(TransformedDataset(train_subset, transform_train))
-        if validation:
-            val_datasets.append(TransformedDataset(train_subset, transform_test))
+        train_datasets.append(train_subset)
     
     if federatedTest:
         test_loaders = []
@@ -183,7 +178,4 @@ def get_federated_cifar100_dataloaders(
     else:
         test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
-    if validation:
-        return train_datasets, val_datasets, test_loaders, client_class_map
-    else:
-        return train_datasets, test_loaders, client_class_map
+    return train_datasets, test_loaders, client_class_map
