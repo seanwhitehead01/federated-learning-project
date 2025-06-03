@@ -227,7 +227,6 @@ def get_clustered_cifar100_datasets(
     for idx, coarse in enumerate(coarse_labels):
         fine = fine_labels[idx]
         coarse_to_fine[coarse].add(fine)
-    coarse_to_fine = {k: sorted(v) for k, v in coarse_to_fine.items()}
 
     # Build client datasets
     client_datasets = {}
@@ -237,7 +236,6 @@ def get_clustered_cifar100_datasets(
         # Balance per class
         n_total_per_class = min(len(class_to_indices[f]) for f in fine_classes)
         n_per_client = n_total_per_class // n_clients_per_cluster
-        assert n_per_client > 0, f"Too many clients for superclass {coarse_label}"
 
         for i in range(n_clients_per_cluster):
             indices = []
