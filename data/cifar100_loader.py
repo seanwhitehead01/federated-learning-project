@@ -234,6 +234,9 @@ def get_clustered_cifar100_datasets(
         n_total_per_class = 500
         n_per_client = n_total_per_class // n_clients_per_cluster
 
+        #DEBUG
+        print(f"Super class {superclass} has fine classes: {fine_classes}")
+
         # Create clients
         for i in range(n_clients_per_cluster):
             indices = []
