@@ -7,7 +7,8 @@ from torch.utils.data import DataLoader, Subset, Dataset, random_split
 from collections import defaultdict
 import random
 import torch
-from torchvision.datasets import CIFAR100
+import os
+import pickle
 import numpy as np
 
 class TransformedDataset(Dataset):
@@ -210,42 +211,43 @@ def get_clustered_cifar100_datasets(
     full_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
     test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
 
-    # Use meta data from CIFAR-100 to get superclass → classes mapping
-    meta = datasets.CIFAR100(root='./dataset', train=True, download=False, coarse=True)
-    fine_labels = np.array(meta.targets)
-    coarse_labels = np.array(meta.coarse_labels)
-
-    # Build mapping from superclass → list of fine classes
-    superclass_to_classes = defaultdict(set)
-    for fine_label, coarse_label in zip(fine_labels, coarse_labels):
-        superclass_to_classes[coarse_label].add(fine_label)
+    # Load meta file manually to get superclass (coarse) labels
+    with open(os.path.join('./dataset', 'cifar-100-python', 'train'), 'rb') as f:
+        entry = pickle.load(f, encoding='latin1')
+        coarse_labels = np.array(entry['coarse_labels'])  # shape: (50000,)
+        fine_labels = np.array(entry['fine_labels'])      # shape: (50000,)
 
     # Group sample indices by fine label
     class_to_indices = defaultdict(list)
     for idx, label in enumerate(fine_labels):
         class_to_indices[label].append(idx)
 
+        # Build mapping from coarse label → list of fine labels
+    coarse_to_fine = defaultdict(set)
+    for idx, coarse in enumerate(coarse_labels):
+        fine = fine_labels[idx]
+        coarse_to_fine[coarse].add(fine)
+    coarse_to_fine = {k: sorted(v) for k, v in coarse_to_fine.items()}
+
     # Build client datasets
     client_datasets = {}
     client_class_map = {}
 
-    for superclass, fine_classes in superclass_to_classes.items():
+    for coarse_label, fine_classes in coarse_to_fine.items():
         # Balance per class
-        n_total_per_class = 500
+        n_total_per_class = min(len(class_to_indices[f]) for f in fine_classes)
         n_per_client = n_total_per_class // n_clients_per_cluster
+        assert n_per_client > 0, f"Too many clients for superclass {coarse_label}"
 
-        #DEBUG
-        print(f"Super class {superclass} has fine classes: {fine_classes}")
-
-        # Create clients
         for i in range(n_clients_per_cluster):
             indices = []
             for fine_label in fine_classes:
                 selected = random.sample(class_to_indices[fine_label], n_per_client)
                 indices.extend(selected)
                 class_to_indices[fine_label] = list(set(class_to_indices[fine_label]) - set(selected))
-            client_datasets[f"cluster{superclass}_client{i}"] = Subset(full_dataset, indices)
-            client_class_map[f"cluster{superclass}_client{i}"] = fine_classes
+            client_name = f"cluster{coarse_label}_client{i}"
+            client_datasets[client_name] = Subset(full_dataset, indices)
+            client_class_map[client_name] = fine_classes
 
     test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
