@@ -211,7 +211,7 @@ def get_clustered_cifar100_datasets(
     test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
 
     # Use meta data from CIFAR-100 to get superclass → classes mapping
-    meta = datasets.CIFAR100(root='./dataset', train=True, download=False)
+    meta = datasets.CIFAR100(root='./dataset', train=True, download=False, coarse=True)
     fine_labels = np.array(meta.targets)
     coarse_labels = np.array(meta.coarse_labels)
 
