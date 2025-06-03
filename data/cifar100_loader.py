@@ -7,6 +7,8 @@ from torch.utils.data import DataLoader, Subset, Dataset, random_split
 from collections import defaultdict
 import random
 import torch
+from torchvision.datasets import CIFAR100
+import numpy as np
 
 class TransformedDataset(Dataset):
     def __init__(self, dataset, transform):
@@ -80,8 +82,8 @@ def get_federated_cifar100_dataloaders(
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
     ])
-    train_dataset = datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
-    test_dataset = datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
+    train_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
+    test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
 
     def group_by_class(dataset):
         class_to_indices = defaultdict(list)
@@ -179,3 +181,69 @@ def get_federated_cifar100_dataloaders(
         test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
 
     return train_datasets, test_loaders, client_class_map
+
+def get_clustered_cifar100_datasets(
+    n_clients_per_cluster=5,
+    batch_size=50,
+    seed=42,
+    federatedTest=False
+):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    # Load CIFAR-100
+    transform_test = transforms.Compose([
+        transforms.Resize(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
+    ])
+
+    transform_train = transforms.Compose([
+        transforms.RandomResizedCrop(224, scale=(0.08, 1.0)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
+    ])
+
+    # Load CIFAR-100 without transform initially
+    full_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
+    test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
+
+    # Use meta data from CIFAR-100 to get superclass → classes mapping
+    meta = datasets.CIFAR100(root='./dataset', train=True, download=False)
+    fine_labels = np.array(meta.targets)
+    coarse_labels = np.array(meta.coarse_labels)
+
+    # Build mapping from superclass → list of fine classes
+    superclass_to_classes = defaultdict(set)
+    for fine_label, coarse_label in zip(fine_labels, coarse_labels):
+        superclass_to_classes[coarse_label].add(fine_label)
+
+    # Group sample indices by fine label
+    class_to_indices = defaultdict(list)
+    for idx, label in enumerate(fine_labels):
+        class_to_indices[label].append(idx)
+
+    # Build client datasets
+    client_datasets = {}
+    client_class_map = {}
+
+    for superclass, fine_classes in superclass_to_classes.items():
+        # Balance per class
+        n_total_per_class = 500
+        n_per_client = n_total_per_class // n_clients_per_cluster
+
+        # Create clients
+        for i in range(n_clients_per_cluster):
+            indices = []
+            for fine_label in fine_classes:
+                selected = random.sample(class_to_indices[fine_label], n_per_client)
+                indices.extend(selected)
+                class_to_indices[fine_label] = list(set(class_to_indices[fine_label]) - set(selected))
+            client_datasets[f"cluster{superclass}_client{i}"] = Subset(full_dataset, indices)
+            client_class_map[f"cluster{superclass}_client{i}"] = fine_classes
+
+    test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+
+    return client_datasets, test_loaders, client_class_map
