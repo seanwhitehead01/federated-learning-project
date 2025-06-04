@@ -14,7 +14,6 @@ def train_on_client(client_id, model, train_dataset, steps, criterion, lr, devic
         train_dataset,
         batch_size=50,
         shuffle=True,
-        num_workers=4
     )
     
     model_copy = copy.deepcopy(model)

@@ -50,9 +50,9 @@ def get_cifar100_loaders(batch_size=64, val_split=0.1):
 
     test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
     return train_loader, val_loader, test_loader
 
@@ -184,12 +184,12 @@ def get_federated_cifar100_dataloaders(
         test_loaders = []
         for i in range(num_clients):
             test_subset = Subset(test_dataset, client_test_indices[i])
-            test_loader = DataLoader(test_subset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+            test_loader = DataLoader(test_subset, batch_size=batch_size, shuffle=False, pin_memory=True)
             test_loaders.append(test_loader)
     else:
-        test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
     return train_datasets, val_loader, test_loaders, client_class_map
 
@@ -257,6 +257,6 @@ def get_clustered_cifar100_datasets(
             client_datasets[client_name] = Subset(full_dataset, indices)
             client_class_map[client_name] = fine_classes
 
-    test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+    test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
     return client_datasets, test_loaders, client_class_map

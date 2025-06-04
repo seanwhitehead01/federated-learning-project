@@ -2,6 +2,7 @@ import torch.optim as optim
 from eval import evaluate
 from train import train
 import random
+from models.prepare_model import freeze_backbone
 from models.federated_averaging import get_trainable_keys, average_models, average_metrics, train_on_client
 
 def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, device):
@@ -11,6 +12,8 @@ def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, devi
 
     for cfg in configs:
         model = model_fn(device)
+        freeze_backbone(model)
+
         optimizer = optim.SGD(model.parameters(), lr=cfg['lr'], momentum=cfg['momentum'])
         
         if cfg['scheduler'] == 'cosine':
@@ -65,6 +68,7 @@ def run_grid_search_federated(train_datasets, val_loader, model_fn, criterion, c
 
     for cfg in configs:
         model = model_fn(device)
+        freeze_backbone(model)
 
         print(f"Training with lr={cfg['lr']}")
         for round in range(10):  # Small number of epochs for quick grid search
