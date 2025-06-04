@@ -66,9 +66,6 @@ def run_grid_search_federated(train_datasets, val_loader, model_fn, criterion, c
     for cfg in configs:
         model = model_fn(device)
 
-        best_loss = float('inf')
-        patience_counter = 0
-
         print(f"Training with lr={cfg['lr']}")
         for round in range(10):  # Small number of epochs for quick grid search
             print(f"\n--- Round {round + 1}/10 ---")
@@ -113,16 +110,6 @@ def run_grid_search_federated(train_datasets, val_loader, model_fn, criterion, c
             val_loss, val_acc = evaluate(model, val_loader, criterion, device)
                 
             print(f"Avg Test Loss: {val_loss:.4f}, Avg Test Accuracy: {val_acc:.4f}")
-
-            if val_loss < best_loss - 1e-2:
-                best_loss = val_loss
-                patience_counter = 0
-            else:
-                patience_counter += 1
-
-            if patience_counter >= 3:
-                print("  Early stopping")
-                break
 
         results['lr'].append(cfg['lr'])
         results['val_loss'].append(val_loss)
