@@ -197,7 +197,6 @@ def get_clustered_cifar100_datasets(
     n_clients_per_cluster=5,
     batch_size=50,
     seed=42,
-    federatedTest=False
 ):
     random.seed(seed)
     np.random.seed(seed)
@@ -257,6 +256,6 @@ def get_clustered_cifar100_datasets(
             client_datasets[client_name] = Subset(full_dataset, indices)
             client_class_map[client_name] = fine_classes
 
-    test_loaders = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
-    return client_datasets, test_loaders, client_class_map
+    return client_datasets, test_loader, client_class_map
