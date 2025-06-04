@@ -216,34 +216,37 @@ def get_clustered_cifar100_datasets(
         transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
     ])
 
-    # Load CIFAR-100 without transform initially
     full_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
     test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
 
-    # Load meta file manually to get superclass (coarse) labels
+    # Load meta data
     with open(os.path.join('./dataset', 'cifar-100-python', 'train'), 'rb') as f:
         entry = pickle.load(f, encoding='latin1')
-        coarse_labels = np.array(entry['coarse_labels'])  # shape: (50000,)
-        fine_labels = np.array(entry['fine_labels'])      # shape: (50000,)
+        coarse_labels = np.array(entry['coarse_labels'])  # (50000,)
+        fine_labels = np.array(entry['fine_labels'])      # (50000,)
 
     # Group sample indices by fine label
     class_to_indices = defaultdict(list)
     for idx, label in enumerate(fine_labels):
         class_to_indices[label].append(idx)
 
-        # Build mapping from coarse label → list of fine labels
+    # Map from coarse to fine classes
     coarse_to_fine = defaultdict(set)
     for idx, coarse in enumerate(coarse_labels):
         fine = fine_labels[idx]
         coarse_to_fine[coarse].add(fine)
 
-    # Build client datasets
-    client_datasets = {}
-    client_class_map = {}
+    # Output structures
+    client_datasets = {}          # client_id (int) → Subset
+    client_class_map = {}         # client_id → fine classes
+    cluster_to_clients = {}       # coarse label → list of client_ids
 
+    client_id = 0
     for coarse_label, fine_classes in coarse_to_fine.items():
-        # Balance per class
-        n_total_per_class = min(len(class_to_indices[f]) for f in fine_classes)
+        fine_classes = sorted(fine_classes)
+        cluster_to_clients[coarse_label] = []
+
+        n_total_per_class = 500 
         n_per_client = n_total_per_class // n_clients_per_cluster
 
         for i in range(n_clients_per_cluster):
@@ -252,10 +255,13 @@ def get_clustered_cifar100_datasets(
                 selected = random.sample(class_to_indices[fine_label], n_per_client)
                 indices.extend(selected)
                 class_to_indices[fine_label] = list(set(class_to_indices[fine_label]) - set(selected))
-            client_name = f"cluster{coarse_label}_client{i}"
-            client_datasets[client_name] = Subset(full_dataset, indices)
-            client_class_map[client_name] = fine_classes
+
+            client_datasets[client_id] = Subset(full_dataset, indices)
+            client_class_map[client_id] = fine_classes
+            cluster_to_clients[coarse_label].append(client_id)
+            client_id += 1
 
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, pin_memory=True)
 
-    return client_datasets, test_loader, client_class_map
+    return client_datasets, test_loader, client_class_map, cluster_to_clients
+
