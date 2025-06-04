@@ -61,7 +61,6 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
             dataset,
             batch_size=50,
             shuffle=True,
-            num_workers=4
         )
 
         scores = fischer_scores(
