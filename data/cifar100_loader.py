@@ -129,7 +129,7 @@ def get_federated_cifar100_dataloaders(
     used_train_indices = set()
     client_train_indices = [[] for _ in range(num_clients)]
 
-    total_samples = 50000
+    total_samples = train_size
     samples_per_client = total_samples // num_clients
 
     for client_id, class_set in enumerate(client_class_map):
