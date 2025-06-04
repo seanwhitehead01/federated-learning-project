@@ -111,7 +111,7 @@ def get_federated_cifar100_dataloaders(
     class_client_map = defaultdict(list)
     client_class_map = [set() for _ in range(num_clients)]
 
-    for num_class in range(num_classes_per_client):
+    for num_class in range(1, num_classes_per_client + 1):
         for client_id in range(num_clients):
             i = 0
             while len(client_class_map[client_id]) < num_class:
