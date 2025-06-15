@@ -4,11 +4,15 @@ import torch.nn.functional as F
 import copy
 from math import floor
 
-def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=100):
+
+def fischer_scores(model, dataloader, device, R=1, mask=None, N=None, num_classes=100):
     model.eval()
     model.to(device)
 
+    # Initialize score storage
     scores = {name: torch.zeros_like(p) for name, p in model.named_parameters() if p.requires_grad}
+    
+    # Track how many samples we've seen per class
     class_counts = defaultdict(int)
 
     for data_batch, labels_batch in dataloader:
@@ -19,7 +23,8 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
             x = data_batch[i].unsqueeze(0)
             y = labels_batch[i].item()
 
-            if class_counts[y] >= N:
+            # Skip if already reached desired number for class y
+            if class_counts[y] >= N[y]:
                 continue
             class_counts[y] += 1
 
@@ -41,12 +46,13 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
                             g = g * mask[name].float()
                         scores[name] += g ** 2
 
-        if all(class_counts[c] >= N for c in range(num_classes)):
+        # Stop early if all classes have reached their quota
+        if all(class_counts[c] >= N[c] for c in range(num_classes)):
             break
 
     return scores
 
-def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=1, num_classes=100, verbose=True):
+def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=None, num_classes=100, verbose=True):
     model_copy = copy.deepcopy(model).to(device)
     model_copy.eval()
 
