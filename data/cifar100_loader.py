@@ -224,7 +224,7 @@ def get_federated_cifar100_dataloaders_with_imbalances(
     num_clients=100,
     num_classes_per_client=10,
     batch_size=50,
-    seed=0,
+    seed=42,
     size_unbalanced=True,
     class_unbalanced=True,
 ):
@@ -263,7 +263,7 @@ def get_federated_cifar100_dataloaders_with_imbalances(
         "medium": {"mean": 500, "std": 50},
         "small": {"mean": 100, "std": 20},
     }
-    size_probs = [0.15, 0.7, 0.15]
+    size_probs = [0.2, 0.6, 0.2]
     distribution_types = ["uniform", "small_unbalance", "large_unbalance"]
     dist_probs = [0.6, 0.25, 0.15]
 
@@ -297,10 +297,10 @@ def get_federated_cifar100_dataloaders_with_imbalances(
     # Decay
     alpha = 0.9  # Decay factor for class probabilities
     # Gamma parameters (unchanged)
-    gamma_base_penalty = 0.5
+    gamma_base_penalty = 0.7
     gamma_penalty_size = 0.7
-    gamma_reward_size = 1.9
-    gamma_penalty_small = 0.5
+    gamma_reward_size = 1.3
+    gamma_penalty_small = 0.9
     gamma_reward_small = 1.3
     gamma_penalty_large = 0.1
     gamma_reward_large = 1.7
