@@ -231,6 +231,7 @@ def get_federated_cifar100_dataloaders_with_imbalances(
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    rng = np.random.default_rng(seed)
 
     # Transforms
     transform_test = transforms.Compose([
@@ -253,7 +254,8 @@ def get_federated_cifar100_dataloaders_with_imbalances(
     for idx, (_, label) in enumerate(train_dataset):
         class_to_indices[label].append(idx)
     for cls in class_to_indices:
-        random.shuffle(class_to_indices[cls])
+        rng.shuffle(class_to_indices[cls])
+
 
     # Configurations
     size_types = {
@@ -265,7 +267,6 @@ def get_federated_cifar100_dataloaders_with_imbalances(
     distribution_types = ["uniform", "small_unbalance", "large_unbalance"]
     dist_probs = [0.6, 0.25, 0.15]
 
-    rng = np.random.default_rng(seed)
 
     # Assign size and class distribution per client
     assigned_sizes = []
