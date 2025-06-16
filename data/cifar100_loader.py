@@ -224,7 +224,7 @@ def get_federated_cifar100_dataloaders_with_imbalances(
     num_clients=100,
     num_classes_per_client=10,
     batch_size=50,
-    seed=42,
+    seed=3,
     size_unbalanced=True,
     class_unbalanced=True,
 ):
