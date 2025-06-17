@@ -231,6 +231,77 @@ def allocate_samples(class_ids, total_samples, dist_type):
             alloc[c] = max(1, minor_total // len(minor))
     return alloc
 
+def get_federated_cifar100_dataloaders_with_dirichlet(
+    num_clients=100,
+    num_classes_per_client=10,
+    beta=1.0,
+    batch_size=50,
+    seed=42
+):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+    # Transforms
+    transform_test = transforms.Compose([
+        transforms.Resize(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
+    ])
+    transform_train = transforms.Compose([
+        transforms.RandomResizedCrop(224, scale=(0.08, 1.0)),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
+    ])
+
+    # Load CIFAR-100
+    train_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
+    test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
+
+    # Organize indices by class
+    class_to_indices = defaultdict(list)
+    for idx, (_, label) in enumerate(train_dataset):
+        class_to_indices[label].append(idx)
+
+    # Shuffle indices within each class
+    for cls in class_to_indices:    
+        class_to_indices[cls] = np.random.permutation(class_to_indices[cls]).tolist()
+
+    # Assign N classes to each client
+    all_classes = np.arange(100)
+    client_class_map = []
+    for _ in range(num_clients):
+        selected_classes = np.random.choice(all_classes, size=num_classes_per_client, replace=False)
+        client_class_map.append(set(selected_classes))
+
+    # Build reverse map: class → list of clients that have that class
+    class_client_map = defaultdict(list)
+    for client_id, class_set in enumerate(client_class_map):
+        for cls in class_set:
+            class_client_map[cls].append(client_id)
+
+    # Assign samples using Dirichlet
+    client_indices = [[] for _ in range(num_clients)]
+
+    for cls, indices in class_to_indices.items():
+        clients_with_class = class_client_map[cls]
+        if not clients_with_class:
+            continue  # Skip classes not assigned to any client
+
+        proportions = np.random.dirichlet([beta] * len(clients_with_class))
+        proportions = (np.cumsum(proportions) * len(indices)).astype(int)[:-1]
+        splits = np.split(np.array(indices), proportions)
+
+        for i, client_id in enumerate(clients_with_class):
+            client_indices[client_id].extend(splits[i].tolist())
+
+    # Wrap into torch.utils.data.Subset
+    client_datasets = [Subset(train_dataset, idxs) for idxs in client_indices]
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    return  client_datasets, test_loader, client_class_map
+
 def get_federated_cifar100_dataloaders_with_imbalances(
     num_clients=100,
     num_classes_per_client=10,

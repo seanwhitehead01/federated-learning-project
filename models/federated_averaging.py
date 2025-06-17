@@ -7,15 +7,10 @@ def get_trainable_keys(model):
     return {name for name, param in model.named_parameters() if param.requires_grad}
 
 
-def train_on_client(client_id, model, train_dataset, steps, criterion, lr, device, mask=None, client_dim='medium'):
+def train_on_client(client_id, model, train_dataset, steps, criterion, lr, device, mask=None):
     print(f"  Training on client {client_id + 1}")
 
-    if client_dim == 'medium':
-        batch_size = 50
-    elif client_dim == 'small':
-        batch_size = 10
-    elif client_dim == 'large':
-        batch_size = 100
+    batch_size = len(train_dataset) // 10
         
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
