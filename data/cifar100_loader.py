@@ -146,10 +146,21 @@ def get_federated_cifar100_dataloaders(
             all_available = []
             for cls in class_set:
                 all_available += [i for i in train_class_indices[cls] if i not in used_train_indices]
-            if len(all_available) < samples_per_client:
-                raise ValueError(f"Not enough total samples for client {client_id}")
-            random.shuffle(all_available)
-            selected = all_available[:samples_per_client]
+            
+            if len(all_available) >= samples_per_client:
+                random.shuffle(all_available)
+                selected = all_available[:samples_per_client]
+            else:
+                # Not enough unique, fill with duplicates from allowed classes
+                selected = all_available.copy()
+                needed = samples_per_client - len(all_available)
+                # Sample with replacement from assigned classes
+                candidate_pool = []
+                for cls in class_set:
+                    candidate_pool += train_class_indices[cls]
+                extra = random.choices(candidate_pool, k=needed)
+                selected.extend(extra)
+
             used_train_indices.update(selected)
             client_train_indices[client_id].extend(selected)
 
