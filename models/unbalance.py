@@ -2,7 +2,7 @@ import numpy as np
 from collections import Counter
 import torch
 
-def compute_discrepancy(client_dataset, num_classes=100, max_classes=10, alpha=2.0):
+def compute_discrepancy(client_dataset, num_classes=100, max_classes=25, alpha=1.0):
     """
     Discrepancy between client distribution and ideal local uniform over seen classes.
 

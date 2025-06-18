@@ -233,7 +233,7 @@ def allocate_samples(class_ids, total_samples, dist_type):
 
 def get_federated_cifar100_dataloaders_with_dirichlet(
     num_clients=100,
-    num_classes_per_client=10,
+    num_classes_per_client=25,
     beta=1.0,
     batch_size=50,
     seed=42
