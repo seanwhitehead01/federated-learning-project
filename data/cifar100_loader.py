@@ -309,10 +309,10 @@ def create_mixed_bias_and_size_partition(
     class_coverage_modes=(("strong", 25, 0.2), ("moderate", 10, 0.5), ("full", 10, 1.0)),
     size_modes=("small", "medium", "large"),
     size_weights=(0.2, 0.6, 0.2),
-    size_means=(200, 500, 800),
-    size_stds=(30, 50, 10),
+    size_means=(500, 1000, 2000),
+    size_stds=(50, 100, 200),
     beta=5.0,
-    seed=42
+    seed=69
 ):
     rng = np.random.default_rng(seed)
     total_class_samples = {c: list(range(c * samples_per_class, (c + 1) * samples_per_class)) for c in range(num_classes)}
@@ -362,6 +362,24 @@ def create_mixed_bias_and_size_partition(
                 client_indices[client_id].extend(samples)
                 class_allocation_counter[c] += take
 
+    # Fix remaining unallocated class samples
+    for c, used_count in class_allocation_counter.items():
+        available = total_class_samples[c]
+        remaining = len(available) - used_count
+        if remaining <= 0:
+            continue
+
+        leftover = available[used_count:]
+        eligible_clients = [i for i in range(num_clients) if c in client_class_map[i]]
+        if not eligible_clients:
+            continue
+
+        idx = 0
+        for sample in leftover:
+            client_id = eligible_clients[idx % len(eligible_clients)]
+            client_indices[client_id].append(sample)
+            idx += 1
+
     return client_indices, client_class_map, client_metadata
 
 
@@ -370,8 +388,8 @@ def create_niid2_cifar100_datasets(
     class_coverage_modes=(("strong", 25, 0.2), ("moderate", 10, 0.5), ("full", 10, 1.0)),
     size_modes=("small", "medium", "large"),
     size_weights=(0.2, 0.6, 0.2),
-    size_means=(200, 500, 800),
-    size_stds=(30, 50, 10),
+    size_means=(500, 1000, 2000),
+    size_stds=(50, 100, 200),
     beta=5.0,
     batch_size=50,
     seed=42
