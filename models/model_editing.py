@@ -55,11 +55,9 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=None):
 
     return scores
 
-def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=None, verbose=True):
+def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=None, verbose=True, batch_size=50):
     model_copy = copy.deepcopy(model).to(device)
     model_copy.eval()
-
-    batch_size = len(dataset) // 10 
 
     param_map = {name: p for name, p in model_copy.named_parameters() if p.requires_grad}
     mask = {name: torch.ones_like(p, dtype=torch.bool) for name, p in param_map.items()}

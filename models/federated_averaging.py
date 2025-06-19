@@ -7,10 +7,8 @@ def get_trainable_keys(model):
     return {name for name, param in model.named_parameters() if param.requires_grad}
 
 
-def train_on_client(client_id, model, train_dataset, steps, criterion, lr, device, mask=None):
+def train_on_client(client_id, model, train_dataset, steps, criterion, lr, device, mask=None, batch_size=50):
     print(f"  Training on client {client_id + 1}")
-
-    batch_size = len(train_dataset) // 10
         
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
