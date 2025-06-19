@@ -312,7 +312,7 @@ def create_mixed_bias_and_size_partition(
     size_means=(500, 1000, 2000),
     size_stds=(50, 100, 200),
     beta=5.0,
-    seed=69
+    seed=42
 ):
     rng = np.random.default_rng(seed)
     total_class_samples = {c: list(range(c * samples_per_class, (c + 1) * samples_per_class)) for c in range(num_classes)}
