@@ -302,19 +302,80 @@ def get_federated_cifar100_dataloaders_with_dirichlet(
 
     return  client_datasets, test_loader, client_class_map
 
-def get_federated_cifar100_dataloaders_with_imbalances(
-    num_clients=100,
-    num_classes_per_client=10,
-    batch_size=50,
-    seed=0,
-    size_unbalanced=True,
-    class_unbalanced=True,
+def create_mixed_bias_and_size_partition(
+    num_clients=45,
+    num_classes=100,
+    samples_per_class=500,
+    class_coverage_modes=(("strong", 25, 0.2), ("moderate", 10, 0.5), ("full", 10, 1.0)),
+    size_modes=("small", "medium", "large"),
+    size_weights=(0.2, 0.6, 0.2),
+    size_means=(200, 500, 800),
+    size_stds=(30, 50, 10),
+    beta=5.0,
+    seed=42
 ):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
     rng = np.random.default_rng(seed)
+    total_class_samples = {c: list(range(c * samples_per_class, (c + 1) * samples_per_class)) for c in range(num_classes)}
+    class_allocation_counter = defaultdict(int)
+    client_indices = [[] for _ in range(num_clients)]
+    client_class_map = [set() for _ in range(num_clients)]
+    client_metadata = [{} for _ in range(num_clients)]
+    client_sizes = np.zeros(num_clients, dtype=int)
 
+    # Assign class coverage (bias)
+    client_pool = list(range(num_clients))
+    assigned = 0
+    for bias_name, count, frac in class_coverage_modes:
+        group = client_pool[assigned:assigned + count]
+        assigned += count
+        num_classes_per_client = int(num_classes * frac)
+        for client_id in group:
+            chosen_classes = rng.choice(num_classes, size=num_classes_per_client, replace=False)
+            client_class_map[client_id] = set(chosen_classes)
+            client_metadata[client_id]["bias"] = bias_name
+
+    # Assign sizes
+    size_labels = rng.choice(size_modes, size=num_clients, p=size_weights)
+    for i, size_label in enumerate(size_labels):
+        idx = size_modes.index(size_label)
+        size = int(np.clip(rng.normal(size_means[idx], size_stds[idx]), 30, None))
+        client_sizes[i] = size
+        client_metadata[i]["size"] = size_label
+
+    # Allocate samples per client based on their view
+    for client_id in range(num_clients):
+        size = client_sizes[client_id]
+        classes = list(client_class_map[client_id])
+        if not classes:
+            continue
+
+        proportions = rng.dirichlet([beta] * len(classes))
+        class_alloc = (proportions * size).astype(int)
+
+        for c, count in zip(classes, class_alloc):
+            available = total_class_samples[c]
+            used = class_allocation_counter[c]
+            remaining = len(available) - used
+            take = min(count, remaining)
+            if take > 0:
+                samples = available[used:used + take]
+                client_indices[client_id].extend(samples)
+                class_allocation_counter[c] += take
+
+    return client_indices, client_class_map, client_metadata
+
+
+def create_niid2_cifar100_datasets(
+    num_total_clients=45,
+    class_coverage_modes=(("strong", 25, 0.2), ("moderate", 10, 0.5), ("full", 10, 1.0)),
+    size_modes=("small", "medium", "large"),
+    size_weights=(0.2, 0.6, 0.2),
+    size_means=(200, 500, 800),
+    size_stds=(30, 50, 10),
+    beta=5.0,
+    batch_size=50,
+    seed=42
+):
     # Transforms
     transform_test = transforms.Compose([
         transforms.Resize(224),
@@ -327,214 +388,20 @@ def get_federated_cifar100_dataloaders_with_imbalances(
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
     ])
-
-    # Load CIFAR-100
     train_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
     test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
 
-    class_to_indices = defaultdict(list)
-    for idx, (_, label) in enumerate(train_dataset):
-        class_to_indices[label].append(idx)
-    for cls in class_to_indices:
-        rng.shuffle(class_to_indices[cls])
+    client_class_map, client_indices, client_metadata = create_mixed_bias_and_size_partition(
+        num_total_clients=num_total_clients,
+        class_coverage_modes=class_coverage_modes,
+        size_modes=size_modes,
+        size_weights=size_weights,
+        size_means=size_means,
+        size_stds=size_stds,
+        beta=beta,
+        seed=seed
+    )
 
-
-    # Configurations
-    size_types = {
-        "large": {"mean": 1000, "std": 100},
-        "medium": {"mean": 500, "std": 50},
-        "small": {"mean": 100, "std": 20},
-    }
-    size_probs = [0.2, 0.6, 0.2]
-    distribution_types = ["uniform", "small_unbalance", "large_unbalance"]
-    dist_probs = [0.6, 0.25, 0.15]
-
-
-    # Assign size and class distribution per client
-    assigned_sizes = []
-    assigned_distributions = []
-    for _ in range(num_clients):
-        if size_unbalanced:
-            size_type = rng.choice(list(size_types.keys()), p=size_probs)
-        else:
-            size_type = "medium"
-        assigned_sizes.append(size_type)
-
-        if class_unbalanced:
-            dist_type = rng.choice(distribution_types, p=dist_probs)
-        else:
-            dist_type = "uniform"
-        assigned_distributions.append(dist_type)
-
-    # Convert size labels to sample counts
-    client_sizes = []
-    for size_type in assigned_sizes:
-        cfg = size_types[size_type]
-        s = int(np.clip(rng.normal(cfg["mean"], cfg["std"]), 30, None)) # No less than 30 samples
-        client_sizes.append(s)
-
-    class_probs = np.ones(100)
-    class_probs /= class_probs.sum()
-
-    # Decay
-    alpha = 0.9  # Decay factor for class probabilities
-    # Gamma parameters (unchanged)
-    gamma_base_penalty = 0.7
-    gamma_penalty_size = 0.7
-    gamma_reward_size = 1.3
-    gamma_penalty_small = 0.9
-    gamma_reward_small = 1.3
-    gamma_penalty_large = 0.1
-    gamma_reward_large = 1.7
-
-
-    client_class_map = []
-    client_indices = [[] for _ in range(num_clients)]
-
-
-    sample_per_class = defaultdict(int)  # ← moved up to track class samples in real-time
-
-    for i in range(num_clients):
-        size_type = assigned_sizes[i]
-        dist_type = assigned_distributions[i]
-
-        # Compute imbalance penalty
-        current_counts = np.array([sample_per_class.get(cls, 0) for cls in range(100)])
-        imbalance_penalty = np.exp(current_counts / (current_counts.max() +  1e-9))  # Avoid division by zero
-        imbalance_penalty /= imbalance_penalty.sum()
-
-        # Adjust class_probs using penalty
-        adjusted_probs = class_probs / imbalance_penalty
-        adjusted_probs /= adjusted_probs.sum()
-
-        # Sample classes with adjusted probs
-        chosen_classes = rng.choice(100, num_classes_per_client, replace=False, p=adjusted_probs)
-        client_class_map.append(set(chosen_classes))
-
-        updated_probs = class_probs.copy()
-
-        # Update class_probs according to client type and selected classes
-        if size_type == 'large':
-            base_variation = gamma_base_penalty * gamma_penalty_size 
-        elif size_type == 'small':
-            base_variation = gamma_base_penalty * gamma_reward_size 
-        else:
-            base_variation = gamma_base_penalty 
-
-        if dist_type == 'large_unbalance':
-            updated_probs[chosen_classes[0]] *= gamma_penalty_large
-            updated_probs[chosen_classes[1:]] *= gamma_reward_large
-        elif dist_type == 'small_unbalance':
-            half = len(chosen_classes) // 2
-            updated_probs[chosen_classes[:half]] *= gamma_penalty_small
-            updated_probs[chosen_classes[half:]] *= gamma_reward_small
-
-        updated_probs[chosen_classes] *= base_variation
-        updated_probs /= updated_probs.sum()
-
-        class_probs = alpha * updated_probs + (1 - alpha) * class_probs
-        class_probs /= class_probs.sum()
-        
-        # Simulate real sample allocation for global tracking
-        class_ids = list(chosen_classes)
-        size = client_sizes[i]
-        alloc = allocate_samples(class_ids, size, dist_type)
-
-        for cls, count in alloc.items():
-            available = class_to_indices[cls]
-            available = rng.permutation(available).tolist()  # Shuffle to avoid always picking the same ones
-
-            if len(available) >= count:
-                # Use only unique samples
-                selected = available[:count]
-            else:
-                # Use all unique samples first
-                selected = available.copy()
-                # Fill the rest with random duplicates
-                extra_needed = count - len(available)
-                extra_samples = rng.choice(available, size=extra_needed, replace=True).tolist()
-                selected.extend(extra_samples)
-
-            client_indices[i].extend(selected)
-
-    train_datasets = [Subset(train_dataset, idxs) for idxs in client_indices]
+    client_datasets = [Subset(train_dataset, indices) for indices in client_indices]
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    return train_datasets, test_loader, client_class_map, assigned_sizes, assigned_distributions
-
-import numpy as np
-from collections import Counter
-
-def get_class_distribution_matrix(train_datasets, client_metadata=None, verbose=False):
-    """
-    Returns a matrix of shape (num_clients, 100) where entry (i, j) is the number of samples
-    of class j held by client i. Optionally prints the distribution per client.
-
-    Args:
-        train_datasets: list of torch.utils.data.Dataset per client
-        client_metadata: list of dicts with 'size_type' and 'class_distribution_type' per client (optional)
-        verbose: whether to print summary table
-    
-    Returns:
-        dist_matrix: np.ndarray of shape (num_clients, 100)
-    """
-    num_clients = len(train_datasets)
-    num_classes = 100
-    dist_matrix = np.zeros((num_clients, num_classes), dtype=int)
-
-    for client_id, dataset in enumerate(train_datasets):
-        label_counts = Counter()
-        for i in range(len(dataset)):
-            _, label = dataset[i]
-            label_counts[label] += 1
-
-        for label, count in label_counts.items():
-            dist_matrix[client_id, label] = count
-
-        if verbose:
-            meta_str = ""
-            if client_metadata:
-                meta = client_metadata[client_id]
-                meta_str = f"| Size: {meta['size_type']:<6} | Dist: {meta['class_distribution_type']:<15} "
-            summary = ", ".join(f"{cls}:{cnt}" for cls, cnt in sorted(label_counts.items()))
-            print(f"Client {client_id:>3} {meta_str}| {summary}")
-
-    return dist_matrix
-        
-import matplotlib.pyplot as plt
-
-def plot_client_distributions(train_datasets, client_metadata, num_clients_to_plot=6):
-    """
-    Plots class distributions for a few selected clients.
-    
-    Args:
-        train_datasets: List of datasets for each client.
-        client_metadata: List of dicts with metadata per client.
-        num_clients_to_plot: How many clients to visualize.
-    """
-    selected_clients = list(range(min(num_clients_to_plot, len(train_datasets))))
-    fig, axs = plt.subplots(len(selected_clients), 1, figsize=(10, 3 * len(selected_clients)))
-    
-    if len(selected_clients) == 1:
-        axs = [axs]
-    
-    for ax, client_id in zip(axs, selected_clients):
-        dataset = train_datasets[client_id]
-        label_counts = Counter()
-        for i in range(len(dataset)):
-            _, label = dataset[i]
-            label_counts[label] += 1
-
-        classes = sorted(label_counts.keys())
-        counts = [label_counts[c] for c in classes]
-
-        ax.bar(classes, counts)
-        ax.set_title(f"Client {client_id} — Size: {client_metadata[client_id]['size_type']}, "
-                     f"Dist: {client_metadata[client_id]['class_distribution_type']}")
-        ax.set_xlabel("Class")
-        ax.set_ylabel("Sample Count")
-        ax.set_xticks(classes)
-    
-    plt.tight_layout()
-    plt.show()
-
+    return client_datasets, test_loader, client_class_map, client_metadata
