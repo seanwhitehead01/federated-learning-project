@@ -304,8 +304,8 @@ def get_federated_cifar100_dataloaders_with_dirichlet(
 
 def create_mixed_bias_and_size_partition(
     num_clients=45,
+    dataset=None,
     num_classes=100,
-    samples_per_class=500,
     class_coverage_modes=(("strong", 25, 0.2), ("moderate", 10, 0.5), ("full", 10, 1.0)),
     size_modes=("small", "medium", "large"),
     size_weights=(0.2, 0.6, 0.2),
@@ -315,7 +315,12 @@ def create_mixed_bias_and_size_partition(
     seed=42
 ):
     rng = np.random.default_rng(seed)
-    total_class_samples = {c: list(range(c * samples_per_class, (c + 1) * samples_per_class)) for c in range(num_classes)}
+
+    class_to_indices = defaultdict(list)
+    for idx, (_, label) in enumerate(dataset):
+        class_to_indices[label].append(idx)
+    total_class_samples = {c: rng.permutation(class_to_indices[c]).tolist() for c in range(100)}
+
     class_allocation_counter = defaultdict(int)
     client_indices = [[] for _ in range(num_clients)]
     client_class_map = [set() for _ in range(num_clients)]
@@ -411,6 +416,7 @@ def create_niid2_cifar100_datasets(
 
     client_indices, client_class_map, client_metadata = create_mixed_bias_and_size_partition(
         num_clients=num_clients,
+        dataset=train_dataset,
         class_coverage_modes=class_coverage_modes,
         size_modes=size_modes,
         size_weights=size_weights,
