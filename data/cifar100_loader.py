@@ -409,7 +409,7 @@ def create_niid2_cifar100_datasets(
     train_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
     test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
 
-    client_class_map, client_indices, client_metadata = create_mixed_bias_and_size_partition(
+    client_indices, client_class_map, client_metadata = create_mixed_bias_and_size_partition(
         num_clients=num_clients,
         class_coverage_modes=class_coverage_modes,
         size_modes=size_modes,
