@@ -306,7 +306,7 @@ def create_mixed_bias_and_size_partition(
     num_clients=45,
     dataset=None,
     num_classes=100,
-    class_coverage_modes=(("strong", 25, 0.2), ("moderate", 10, 0.5), ("full", 10, 1.0)),
+    class_coverage_modes=(("full", 10, 1.0), ("moderate", 10, 0.5), ("strong", 25, 0.2)),
     size_modes=("small", "medium", "large"),
     size_weights=(0.2, 0.6, 0.2),
     size_means=(500, 1000, 2000),
@@ -390,7 +390,7 @@ def create_mixed_bias_and_size_partition(
 
 def create_niid2_cifar100_datasets(
     num_clients=45,
-    class_coverage_modes=(("strong", 25, 0.2), ("moderate", 10, 0.5), ("full", 10, 1.0)),
+    class_coverage_modes=(("full", 10, 1.0), ("moderate", 10, 0.5), ("strong", 25, 0.2)),
     size_modes=("small", "medium", "large"),
     size_weights=(0.2, 0.6, 0.2),
     size_means=(500, 1000, 2000),
