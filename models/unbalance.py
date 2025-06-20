@@ -90,3 +90,27 @@ def compute_discrepancy_aware_weights_sigmoid(client_sizes, discrepancies, a=0.4
     # Normalize to sum to 1
     weights /= weights.sum()
     return weights
+
+def compute_severity(client_sizes, discrepancies, a=0.9, b=0.1):
+    """
+    Computes severity scores for clients based on size and discrepancy.
+
+    Args:
+        client_sizes: list or array of ints (number of samples per client)
+        discrepancies: list or array of floats (KL divergence per client)
+        a: penalty scaling factor for discrepancy
+        b: bias term to avoid all-zeros in logits
+
+    Returns:
+        severity_scores: list of severity scores for each client
+    """
+    client_sizes = np.array(client_sizes, dtype=np.float64)
+    discrepancies = np.array(discrepancies, dtype=np.float64)
+
+    # Normalize size and discrepancy
+    size_norm = client_sizes / (client_sizes.max() + 1e-9)
+    discrepancy_norm = discrepancies / (discrepancies.max() + 1e-9)
+
+    severity = a * discrepancy_norm + b * (1 - size_norm)
+
+    return severity
