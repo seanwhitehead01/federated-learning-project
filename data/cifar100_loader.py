@@ -204,104 +204,6 @@ def get_federated_cifar100_dataloaders(
 
     return train_datasets, val_loader, test_loaders, client_class_map
 
-def allocate_samples(class_ids, total_samples, dist_type):
-    alloc = defaultdict(int)
-    n = len(class_ids)
-    if dist_type == "uniform":
-        per = total_samples // n
-        for c in class_ids:
-            alloc[c] = per
-    elif dist_type == "small_unbalance":
-        half = n // 2
-        major = class_ids[:half]
-        minor = class_ids[half:]
-        major_total = int(total_samples * 0.8)
-        minor_total = total_samples - major_total
-        for c in major:
-            alloc[c] = max(1, major_total // len(major))
-        for c in minor:
-            alloc[c] = max(1, minor_total // len(minor))
-    elif dist_type == "large_unbalance":
-        major = class_ids[0]
-        minor = class_ids[1:]
-        major_total = int(total_samples * 0.8)
-        minor_total = total_samples - major_total
-        alloc[major] = major_total
-        for c in minor:
-            alloc[c] = max(1, minor_total // len(minor))
-    return alloc
-
-def get_federated_cifar100_dataloaders_with_dirichlet(
-    num_clients=100,
-    num_classes_per_client=25,
-    beta=1.0,
-    batch_size=50,
-    seed=42
-):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-
-    # Transforms
-    transform_test = transforms.Compose([
-        transforms.Resize(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
-    ])
-    transform_train = transforms.Compose([
-        transforms.RandomResizedCrop(224, scale=(0.08, 1.0)),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.507, 0.487, 0.441], std=[0.267, 0.256, 0.276]),
-    ])
-
-    # Load CIFAR-100
-    train_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
-    test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
-
-    # Organize indices by class
-    class_to_indices = defaultdict(list)
-    for idx, (_, label) in enumerate(train_dataset):
-        class_to_indices[label].append(idx)
-
-    # Shuffle indices within each class
-    for cls in class_to_indices:    
-        class_to_indices[cls] = np.random.permutation(class_to_indices[cls]).tolist()
-
-    # Assign N classes to each client
-    all_classes = np.arange(100)
-    client_class_map = []
-    for _ in range(num_clients):
-        selected_classes = np.random.choice(all_classes, size=num_classes_per_client, replace=False)
-        client_class_map.append(set(selected_classes))
-
-    # Build reverse map: class → list of clients that have that class
-    class_client_map = defaultdict(list)
-    for client_id, class_set in enumerate(client_class_map):
-        for cls in class_set:
-            class_client_map[cls].append(client_id)
-
-    # Assign samples using Dirichlet
-    client_indices = [[] for _ in range(num_clients)]
-
-    for cls, indices in class_to_indices.items():
-        clients_with_class = class_client_map[cls]
-        if not clients_with_class:
-            continue  # Skip classes not assigned to any client
-
-        proportions = np.random.dirichlet([beta] * len(clients_with_class))
-        proportions = (np.cumsum(proportions) * len(indices)).astype(int)[:-1]
-        splits = np.split(np.array(indices), proportions)
-
-        for i, client_id in enumerate(clients_with_class):
-            client_indices[client_id].extend(splits[i].tolist())
-
-    # Wrap into torch.utils.data.Subset
-    client_datasets = [Subset(train_dataset, idxs) for idxs in client_indices]
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    return  client_datasets, test_loader, client_class_map
-
 def create_mixed_bias_and_size_partition(
     num_clients=45,
     dataset=None,
@@ -312,7 +214,7 @@ def create_mixed_bias_and_size_partition(
     size_means=(500, 1000, 2000),
     size_stds=(50, 100, 200),
     beta=5.0,
-    seed=42
+    seed=1
 ):
     rng = np.random.default_rng(seed)
 
@@ -388,7 +290,7 @@ def create_mixed_bias_and_size_partition(
     return client_indices, client_class_map, client_metadata
 
 
-def create_niid2_cifar100_datasets(
+def get_unbalanced_cifar100_datasets(
     num_clients=45,
     class_coverage_modes=(("full", 10, 1.0), ("moderate", 10, 0.5), ("strong", 25, 0.2)),
     size_modes=("small", "medium", "large"),
@@ -397,7 +299,7 @@ def create_niid2_cifar100_datasets(
     size_stds=(50, 100, 200),
     beta=5.0,
     batch_size=50,
-    seed=42
+    seed=1
 ):
     # Transforms
     transform_test = transforms.Compose([
