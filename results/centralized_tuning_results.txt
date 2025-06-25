@@ -1,0 +1,208 @@
+**SCHEDULER LINEAR**
+
+Training with lr=0.01, momentum=0.8
+  Epoch 1: Val Loss = 2.7712, Val Acc = 0.5672
+  Epoch 2: Val Loss = 2.5277, Val Acc = 0.5938
+  Epoch 3: Val Loss = 2.3455, Val Acc = 0.6314
+  Epoch 4: Val Loss = 2.1526, Val Acc = 0.6644
+  Epoch 5: Val Loss = 2.0576, Val Acc = 0.6638
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.01, momentum=0.9
+  Epoch 1: Val Loss = 4.3053, Val Acc = 0.5794
+  Epoch 2: Val Loss = 3.6982, Val Acc = 0.6374
+  Epoch 3: Val Loss = 3.7081, Val Acc = 0.6438
+  Epoch 4: Val Loss = 3.7902, Val Acc = 0.6544
+  Epoch 5: Val Loss = 4.1594, Val Acc = 0.6570
+  Early stopping
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.01, momentum=0.95
+  Epoch 1: Val Loss = 8.7538, Val Acc = 0.5846
+  Epoch 2: Val Loss = 8.4414, Val Acc = 0.6136
+  Epoch 3: Val Loss = 8.5172, Val Acc = 0.6398
+  Epoch 4: Val Loss = 8.1385, Val Acc = 0.6492
+  Epoch 5: Val Loss = 8.7028, Val Acc = 0.6518
+Best val acc: 0.6638 with lr=0.01, momentum=0.8
+
+Training with lr=0.001, momentum=0.8
+  Epoch 1: Val Loss = 1.6243, Val Acc = 0.5606
+  Epoch 2: Val Loss = 1.3449, Val Acc = 0.6250
+  Epoch 3: Val Loss = 1.1915, Val Acc = 0.6594
+  Epoch 4: Val Loss = 1.1408, Val Acc = 0.6816
+  Epoch 5: Val Loss = 1.0984, Val Acc = 0.6826
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.001, momentum=0.9
+  Epoch 1: Val Loss = 1.4247, Val Acc = 0.6164
+  Epoch 2: Val Loss = 1.1926, Val Acc = 0.6682
+  Epoch 3: Val Loss = 1.1290, Val Acc = 0.6858
+  Epoch 4: Val Loss = 1.0748, Val Acc = 0.6986
+  Epoch 5: Val Loss = 1.0497, Val Acc = 0.7082
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.001, momentum=0.95
+  Epoch 1: Val Loss = 1.3481, Val Acc = 0.6454
+  Epoch 2: Val Loss = 1.2623, Val Acc = 0.6766
+  Epoch 3: Val Loss = 1.3068, Val Acc = 0.6748
+  Epoch 4: Val Loss = 1.1581, Val Acc = 0.7052
+  Epoch 5: Val Loss = 1.1636, Val Acc = 0.7068
+Best val acc: 0.7082 with lr=0.001, momentum=0.9
+
+Training with lr=0.005, momentum=0.8
+  Epoch 1: Val Loss = 1.5348, Val Acc = 0.6268
+  Epoch 2: Val Loss = 1.4097, Val Acc = 0.6574
+  Epoch 3: Val Loss = 1.3757, Val Acc = 0.6790
+  Epoch 4: Val Loss = 1.3187, Val Acc = 0.6902
+  Epoch 5: Val Loss = 1.2996, Val Acc = 0.6940
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.005, momentum=0.9
+  Epoch 1: Val Loss = 2.3051, Val Acc = 0.5968
+  Epoch 2: Val Loss = 1.9583, Val Acc = 0.6466
+  Epoch 3: Val Loss = 2.0546, Val Acc = 0.6648
+  Epoch 4: Val Loss = 1.9643, Val Acc = 0.6566
+  Epoch 5: Val Loss = 1.9482, Val Acc = 0.6694
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.005, momentum=0.95
+  Epoch 1: Val Loss = 3.9350, Val Acc = 0.5878
+  Epoch 2: Val Loss = 4.2840, Val Acc = 0.6282
+  Epoch 3: Val Loss = 3.9662, Val Acc = 0.6430
+  Epoch 4: Val Loss = 3.5091, Val Acc = 0.6564
+  Epoch 5: Val Loss = 4.0274, Val Acc = 0.6596
+Best val acc: 0.6940 with lr=0.005, momentum=0.8
+
+
+**SCHEDULER EXPONENTIAL**
+
+Training with lr=0.01, momentum=0.8
+  Epoch 1: Val Loss = 2.3769, Val Acc = 0.5914
+  Epoch 2: Val Loss = 2.1185, Val Acc = 0.6412
+  Epoch 3: Val Loss = 1.6344, Val Acc = 0.6730
+  Epoch 4: Val Loss = 1.7037, Val Acc = 0.6716
+  Epoch 5: Val Loss = 1.5091, Val Acc = 0.6966
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.01, momentum=0.9
+  Epoch 1: Val Loss = 4.1232, Val Acc = 0.5818
+  Epoch 2: Val Loss = 3.4027, Val Acc = 0.6390
+  Epoch 3: Val Loss = 3.0983, Val Acc = 0.6542
+  Epoch 4: Val Loss = 3.1542, Val Acc = 0.6566
+  Epoch 5: Val Loss = 2.6442, Val Acc = 0.6804
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.01, momentum=0.95
+  Epoch 1: Val Loss = 7.8758, Val Acc = 0.6024
+  Epoch 2: Val Loss = 6.7961, Val Acc = 0.6328
+  Epoch 3: Val Loss = 5.9258, Val Acc = 0.6684
+  Epoch 4: Val Loss = 6.2606, Val Acc = 0.6652
+  Epoch 5: Val Loss = 5.3436, Val Acc = 0.6730
+Best val acc: 0.6966 with lr=0.01, momentum=0.8
+
+Training with lr=0.001, momentum=0.8
+  Epoch 1: Val Loss = 1.5547, Val Acc = 0.5698
+  Epoch 2: Val Loss = 1.2913, Val Acc = 0.6354
+  Epoch 3: Val Loss = 1.1802, Val Acc = 0.6684
+  Epoch 4: Val Loss = 1.1189, Val Acc = 0.6796
+  Epoch 5: Val Loss = 1.0691, Val Acc = 0.6918
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.001, momentum=0.9
+  Epoch 1: Val Loss = 1.3351, Val Acc = 0.6282
+  Epoch 2: Val Loss = 1.1570, Val Acc = 0.6688
+  Epoch 3: Val Loss = 1.0844, Val Acc = 0.6940
+  Epoch 4: Val Loss = 1.0507, Val Acc = 0.7042
+  Epoch 5: Val Loss = 1.0181, Val Acc = 0.7142
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.001, momentum=0.95
+  Epoch 1: Val Loss = 1.3119, Val Acc = 0.6542
+  Epoch 2: Val Loss = 1.1779, Val Acc = 0.6896
+  Epoch 3: Val Loss = 1.1279, Val Acc = 0.7022
+  Epoch 4: Val Loss = 1.0655, Val Acc = 0.7174
+  Epoch 5: Val Loss = 1.0420, Val Acc = 0.7218
+Best val acc: 0.7218 with lr=0.001, momentum=0.95
+
+Training with lr=0.005, momentum=0.8, scheduler=exp
+  Epoch 1: Val Loss = 1.5419, Val Acc = 0.6196
+  Epoch 2: Val Loss = 1.4456, Val Acc = 0.6424
+  Epoch 3: Val Loss = 1.2880, Val Acc = 0.6718
+  Epoch 4: Val Loss = 1.2067, Val Acc = 0.6948
+  Epoch 5: Val Loss = 1.1323, Val Acc = 0.7050
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.005, momentum=0.9, scheduler=exp
+  Epoch 1: Val Loss = 2.2768, Val Acc = 0.6060
+  Epoch 2: Val Loss = 1.9049, Val Acc = 0.6566
+  Epoch 3: Val Loss = 1.5505, Val Acc = 0.6916
+  Epoch 4: Val Loss = 1.5063, Val Acc = 0.6924
+  Epoch 5: Val Loss = 1.4505, Val Acc = 0.6942
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.005, momentum=0.95, scheduler=exp
+  Epoch 1: Val Loss = 4.3335, Val Acc = 0.5820
+  Epoch 2: Val Loss = 3.5136, Val Acc = 0.6380
+  Epoch 3: Val Loss = 3.3607, Val Acc = 0.6382
+  Epoch 4: Val Loss = 3.0347, Val Acc = 0.6680
+  Epoch 5: Val Loss = 2.3712, Val Acc = 0.7054
+Best val acc: 0.7054 with lr=0.005, momentum=0.95
+
+
+**SCHEDULER COSINE**
+
+Training with lr=0.01, momentum=0.8, scheduler=cosine
+  Epoch 1: Val Loss = 2.3531, Val Acc = 0.5878
+  Epoch 2: Val Loss = 2.3478, Val Acc = 0.6060
+  Epoch 3: Val Loss = 1.5587, Val Acc = 0.6790
+  Epoch 4: Val Loss = 1.2062, Val Acc = 0.7202
+  Epoch 5: Val Loss = 1.0907, Val Acc = 0.7338
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.01, momentum=0.9, scheduler=cosine
+  Epoch 1: Val Loss = 3.8831, Val Acc = 0.6038
+  Epoch 2: Val Loss = 3.8275, Val Acc = 0.6276
+  Epoch 3: Val Loss = 2.7765, Val Acc = 0.6728
+  Epoch 4: Val Loss = 2.0467, Val Acc = 0.7000
+  Epoch 5: Val Loss = 1.6161, Val Acc = 0.7312
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.01, momentum=0.95, scheduler=cosine
+  Epoch 1: Val Loss = 7.9126, Val Acc = 0.6026
+  Epoch 2: Val Loss = 7.4492, Val Acc = 0.6218
+  Epoch 3: Val Loss = 6.5425, Val Acc = 0.6424
+  Epoch 4: Val Loss = 4.0461, Val Acc = 0.6902
+  Epoch 5: Val Loss = 3.0624, Val Acc = 0.7320
+Best val acc: 0.7338 with lr=0.01, momentum=0.8
+
+Training with lr=0.001, momentum=0.8, scheduler=cosine
+  Epoch 1: Val Loss = 1.6353, Val Acc = 0.5606
+  Epoch 2: Val Loss = 1.3475, Val Acc = 0.6232
+  Epoch 3: Val Loss = 1.2457, Val Acc = 0.6528
+  Epoch 4: Val Loss = 1.1889, Val Acc = 0.6706
+  Epoch 5: Val Loss = 1.1739, Val Acc = 0.6704
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.001, momentum=0.9, scheduler=cosine
+  Epoch 1: Val Loss = 1.3883, Val Acc = 0.6118
+  Epoch 2: Val Loss = 1.1937, Val Acc = 0.6604
+  Epoch 3: Val Loss = 1.0999, Val Acc = 0.6886
+  Epoch 4: Val Loss = 1.0449, Val Acc = 0.6988
+  Epoch 5: Val Loss = 1.0213, Val Acc = 0.7024
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.001, momentum=0.95, scheduler=cosine
+  Epoch 1: Val Loss = 1.3716, Val Acc = 0.6366
+  Epoch 2: Val Loss = 1.1954, Val Acc = 0.6748
+  Epoch 3: Val Loss = 1.0969, Val Acc = 0.7014
+  Epoch 4: Val Loss = 1.0207, Val Acc = 0.7158
+  Epoch 5: Val Loss = 0.9686, Val Acc = 0.7298
+Best val acc: 0.7298 with lr=0.001, momentum=0.95
+
+Training with lr=0.005, momentum=0.8, scheduler=cosine
+  Epoch 1: Val Loss = 1.4984, Val Acc = 0.6206
+  Epoch 2: Val Loss = 1.3547, Val Acc = 0.6676
+  Epoch 3: Val Loss = 1.1934, Val Acc = 0.6914
+  Epoch 4: Val Loss = 1.0515, Val Acc = 0.7136
+  Epoch 5: Val Loss = 0.9939, Val Acc = 0.7276
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.005, momentum=0.9, scheduler=cosine
+  Epoch 1: Val Loss = 2.0956, Val Acc = 0.6280
+  Epoch 2: Val Loss = 1.7136, Val Acc = 0.6618
+  Epoch 3: Val Loss = 1.5159, Val Acc = 0.6860
+  Epoch 4: Val Loss = 1.1821, Val Acc = 0.7226
+  Epoch 5: Val Loss = 1.0950, Val Acc = 0.7372
+Using cache found in /root/.cache/torch/hub/facebookresearch_dino_main
+Training with lr=0.005, momentum=0.95, scheduler=cosine
+  Epoch 1: Val Loss = 3.7360, Val Acc = 0.5998
+  Epoch 2: Val Loss = 3.2454, Val Acc = 0.6502
+  Epoch 3: Val Loss = 2.6766, Val Acc = 0.6802
+  Epoch 4: Val Loss = 1.8087, Val Acc = 0.7204
+  Epoch 5: Val Loss = 1.5800, Val Acc = 0.7328
+Best val acc: 0.7372 with lr=0.005, momentum=0.9
+
+

@@ -1,0 +1,31 @@
+Density 0.3
+Epoch 1/10
+  Train Loss: 1.2182 | Train Acc: 0.6617
+  Test Loss:  0.7190 | Test Acc:  0.7859
+Epoch 2/10
+  Train Loss: 0.9964 | Train Acc: 0.7211
+  Test Loss:  0.7538 | Test Acc:  0.7870
+Epoch 3/10
+  Train Loss: 0.8897 | Train Acc: 0.7490
+  Test Loss:  0.7057 | Test Acc:  0.7995
+Epoch 4/10
+  Train Loss: 0.7857 | Train Acc: 0.7778
+  Test Loss:  0.6963 | Test Acc:  0.8080
+Epoch 5/10
+  Train Loss: 0.6995 | Train Acc: 0.8021
+  Test Loss:  0.6446 | Test Acc:  0.8212
+Epoch 6/10
+  Train Loss: 0.6197 | Train Acc: 0.8275
+  Test Loss:  0.6682 | Test Acc:  0.8231
+Epoch 7/10
+  Train Loss: 0.5290 | Train Acc: 0.8537
+  Test Loss:  0.6629 | Test Acc:  0.8335
+Epoch 8/10
+  Train Loss: 0.4665 | Train Acc: 0.8724
+  Test Loss:  0.6472 | Test Acc:  0.8394
+Epoch 9/10
+  Train Loss: 0.4303 | Train Acc: 0.8822
+  Test Loss:  0.6231 | Test Acc:  0.8438
+Epoch 10/10
+  Train Loss: 0.3992 | Train Acc: 0.8905
+  Test Loss:  0.6205 | Test Acc:  0.8446

@@ -9,26 +9,27 @@ This project presents the development and evaluation of models within a Federate
 
 ```
 federated-learning-project/
-├── checkpoints/                             # Directory containing the saved models
-├── data/                                    # Script to load the CIFAR-100 dataset
-├── dataset/                                 # Directory containing the dataset
-├── model/                                   # Scripts for model operations:
-│   ├── federated_averaging.py               # Federated averaging logic
-│   ├── model_editing.py                     # Model editing and sparsity management
-│   ├── hyperparameter_tuning.py             # Hyperparameter tuning routines
-│   ├── prepare_model.py                     # Model loading and layer freezing
-│   └── unbalance.py                         # Tools for unbalanced data: weights, discrepancy, severity
-├── scripts/                                 # Jupyter notebooks to reproduce experiments
+├── checkpoints/                          # Directory containing the saved models
+├── data/                                 # Script to load the CIFAR-100 dataset
+├── dataset/                              # Directory containing the dataset
+├── model/                                # Scripts for model operations:
+│   ├── federated_averaging.py            # Federated averaging logic
+│   ├── model_editing.py                  # Model editing and sparsity management
+│   ├── hyperparameter_tuning.py          # Hyperparameter tuning routines
+│   ├── prepare_model.py                  # Model loading and layer freezing
+│   └── unbalance.py                      # Tools for unbalanced data: weights, discrepancy, severity
+├── results/                              # Directory containing the results of the experiments
+├── scripts/                              # Jupyter notebooks to reproduce experiments
 │   ├── centralized_baseline.ipynb
 │   ├── centralized_model_editing.ipynb
 │   ├── federated_averaging.ipynb
 │   ├── federated_model_editing.ipynb
-│   ├── federated_unbalance_disco_head.ipynb # Contains personal contribution experiments
-│   └── federated_unbalance.ipynb            # Contains personal contribution experiments
-├── train.py                                 # Standalone script to train a model
-├── eval.py                                  # Standalone script to evaluate a model
-├── requirements.txt                         # Python dependencies for reproducibility
-└── README.md                                # This documentation
+│   ├── federated_unbalance_head.ipynb    # Contains personal contribution experiments
+│   └── federated_unbalance_masked.ipynb  # Contains personal contribution experiments
+├── train.py                              # Standalone script to train a model
+├── eval.py                               # Standalone script to evaluate a model
+├── requirements.txt                      # Python dependencies for reproducibility
+└── README.md                             # This documentation
 ```
 
 ---
@@ -54,10 +55,10 @@ All experiments can be executed in Google Colab. Some notebooks allow configurat
    - `centralized_model_editing.ipynb`: Centralized model editing baseline
    - `federated_averaging.ipynb`: Federated learning with IID and non-IID clients
    - `federated_model_editing.ipynb`: Federated learning with model editing (both IID and non-IID cases)
-   - `federated_unbalance_disco_head.ipynb`: Federated learning in unbalanced scenario training only the head. Includes 2 modes:
+   - `federated_unbalance_head.ipynb`: Federated learning in unbalanced scenario training only the head. Includes 2 modes:
      - Baseline
      - Discrepancy-aware weighted aggregation
-   - `federated_unbalance.ipynb`: Federated learning in unbalanced scenario. Includes multiple modes:
+   - `federated_unbalance_masked.ipynb`: Federated learning in unbalanced scenario with sparse fine-tuning. Includes multiple modes:
      - Baseline
      - Discrepancy-aware weighted aggregation
      - Severity-aware sparse fine-tuning

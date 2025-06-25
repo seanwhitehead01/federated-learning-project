@@ -1,0 +1,240 @@
+
+--- Round 1/10 ---
+  Training on client 5
+  Train loss: 9.3385, Train accuracy: 0.2875
+  Training on client 14
+  Train loss: 8.0465, Train accuracy: 0.3400
+  Training on client 77
+  Train loss: 10.0962, Train accuracy: 0.2750
+  Training on client 56
+  Train loss: 10.4032, Train accuracy: 0.2550
+  Training on client 45
+  Train loss: 5.8753, Train accuracy: 0.3775
+  Training on client 94
+  Train loss: 7.2063, Train accuracy: 0.3350
+  Training on client 41
+  Train loss: 7.9138, Train accuracy: 0.3625
+  Training on client 78
+  Train loss: 6.2931, Train accuracy: 0.3850
+  Training on client 66
+  Train loss: 8.8080, Train accuracy: 0.3075
+  Training on client 15
+  Train loss: 11.8239, Train accuracy: 0.2225
+Avg Train Loss: 8.5805, Avg Train Accuracy: 0.3148
+Avg Test Loss: 7.1525, Avg Test Accuracy: 0.0183
+
+--- Round 2/10 ---
+  Training on client 50
+  Train loss: 9.9040, Train accuracy: 0.2450
+  Training on client 74
+  Train loss: 11.4301, Train accuracy: 0.2375
+  Training on client 25
+  Train loss: 9.5307, Train accuracy: 0.2775
+  Training on client 33
+  Train loss: 7.3168, Train accuracy: 0.4175
+  Training on client 6
+  Train loss: 8.6269, Train accuracy: 0.2775
+  Training on client 91
+  Train loss: 10.2073, Train accuracy: 0.2625
+  Training on client 56
+  Train loss: 7.3334, Train accuracy: 0.2975
+  Training on client 1
+  Train loss: 7.5836, Train accuracy: 0.3400
+  Training on client 67
+  Train loss: 4.5830, Train accuracy: 0.4450
+  Training on client 69
+  Train loss: 7.5034, Train accuracy: 0.3550
+Avg Train Loss: 8.4019, Avg Train Accuracy: 0.3155
+Avg Test Loss: 6.7292, Avg Test Accuracy: 0.0338
+
+--- Round 3/10 ---
+  Training on client 88
+  Train loss: 11.0233, Train accuracy: 0.2775
+  Training on client 93
+  Train loss: 4.4757, Train accuracy: 0.4375
+  Training on client 95
+  Train loss: 6.8083, Train accuracy: 0.3950
+  Training on client 86
+  Train loss: 12.9149, Train accuracy: 0.2125
+  Training on client 26
+  Train loss: 10.2720, Train accuracy: 0.2875
+  Training on client 47
+  Train loss: 10.6438, Train accuracy: 0.2350
+  Training on client 56
+  Train loss: 8.4429, Train accuracy: 0.3350
+  Training on client 9
+  Train loss: 6.7270, Train accuracy: 0.3600
+  Training on client 43
+  Train loss: 10.1081, Train accuracy: 0.2700
+  Training on client 80
+  Train loss: 9.5780, Train accuracy: 0.3025
+Avg Train Loss: 9.0994, Avg Train Accuracy: 0.3113
+Avg Test Loss: 6.3316, Avg Test Accuracy: 0.0446
+
+--- Round 4/10 ---
+  Training on client 41
+  Train loss: 4.7361, Train accuracy: 0.4500
+  Training on client 85
+  Train loss: 6.4965, Train accuracy: 0.3725
+  Training on client 16
+  Train loss: 5.9277, Train accuracy: 0.4250
+  Training on client 93
+  Train loss: 4.6118, Train accuracy: 0.4325
+  Training on client 39
+  Train loss: 8.6063, Train accuracy: 0.3100
+  Training on client 65
+  Train loss: 9.2403, Train accuracy: 0.3175
+  Training on client 40
+  Train loss: 7.6535, Train accuracy: 0.3175
+  Training on client 86
+  Train loss: 9.6760, Train accuracy: 0.2925
+  Training on client 53
+  Train loss: 6.9198, Train accuracy: 0.3625
+  Training on client 42
+  Train loss: 9.3162, Train accuracy: 0.2800
+Avg Train Loss: 7.3184, Avg Train Accuracy: 0.3560
+Avg Test Loss: 6.0442, Avg Test Accuracy: 0.0511
+
+--- Round 5/10 ---
+  Training on client 52
+  Train loss: 11.2346, Train accuracy: 0.2625
+  Training on client 90
+  Train loss: 11.3438, Train accuracy: 0.2650
+  Training on client 38
+  Train loss: 10.7619, Train accuracy: 0.2500
+  Training on client 71
+  Train loss: 6.3139, Train accuracy: 0.3650
+  Training on client 17
+  Train loss: 7.8075, Train accuracy: 0.3325
+  Training on client 25
+  Train loss: 5.3212, Train accuracy: 0.4050
+  Training on client 54
+  Train loss: 9.3702, Train accuracy: 0.2475
+  Training on client 86
+  Train loss: 9.4681, Train accuracy: 0.2950
+  Training on client 49
+  Train loss: 7.1815, Train accuracy: 0.3700
+  Training on client 87
+  Train loss: 10.2927, Train accuracy: 0.2450
+Avg Train Loss: 8.9095, Avg Train Accuracy: 0.3038
+Avg Test Loss: 5.5450, Avg Test Accuracy: 0.0632
+
+--- Round 6/10 ---
+  Training on client 96
+  Train loss: 8.6773, Train accuracy: 0.3025
+  Training on client 23
+  Train loss: 8.4397, Train accuracy: 0.3150
+  Training on client 79
+  Train loss: 12.5568, Train accuracy: 0.2175
+  Training on client 73
+  Train loss: 9.6302, Train accuracy: 0.3025
+  Training on client 39
+  Train loss: 6.8230, Train accuracy: 0.3900
+  Training on client 52
+  Train loss: 8.4742, Train accuracy: 0.3550
+  Training on client 71
+  Train loss: 6.5838, Train accuracy: 0.3975
+  Training on client 1
+  Train loss: 6.2423, Train accuracy: 0.4275
+  Training on client 37
+  Train loss: 6.3434, Train accuracy: 0.4250
+  Training on client 27
+  Train loss: 8.3557, Train accuracy: 0.3125
+Avg Train Loss: 8.2127, Avg Train Accuracy: 0.3445
+Avg Test Loss: 5.5424, Avg Test Accuracy: 0.0695
+
+--- Round 7/10 ---
+  Training on client 56
+  Train loss: 6.4374, Train accuracy: 0.4000
+  Training on client 75
+  Train loss: 7.7746, Train accuracy: 0.2925
+  Training on client 78
+  Train loss: 4.4342, Train accuracy: 0.4975
+  Training on client 84
+  Train loss: 11.5372, Train accuracy: 0.2250
+  Training on client 42
+  Train loss: 8.0616, Train accuracy: 0.3475
+  Training on client 60
+  Train loss: 7.6794, Train accuracy: 0.3700
+  Training on client 57
+  Train loss: 5.9278, Train accuracy: 0.4350
+  Training on client 87
+  Train loss: 7.5651, Train accuracy: 0.3075
+  Training on client 28
+  Train loss: 10.3366, Train accuracy: 0.3175
+  Training on client 66
+  Train loss: 5.0653, Train accuracy: 0.4300
+Avg Train Loss: 7.4819, Avg Train Accuracy: 0.3623
+Avg Test Loss: 5.4437, Avg Test Accuracy: 0.0822
+
+--- Round 8/10 ---
+  Training on client 61
+  Train loss: 6.0839, Train accuracy: 0.3900
+  Training on client 95
+  Train loss: 5.7730, Train accuracy: 0.4200
+  Training on client 22
+  Train loss: 8.6838, Train accuracy: 0.2950
+  Training on client 85
+  Train loss: 4.9067, Train accuracy: 0.4225
+  Training on client 11
+  Train loss: 7.3919, Train accuracy: 0.3050
+  Training on client 37
+  Train loss: 4.5801, Train accuracy: 0.5075
+  Training on client 66
+  Train loss: 4.5956, Train accuracy: 0.4325
+  Training on client 82
+  Train loss: 12.1046, Train accuracy: 0.2300
+  Training on client 80
+  Train loss: 9.6550, Train accuracy: 0.3100
+  Training on client 43
+  Train loss: 8.6498, Train accuracy: 0.3150
+Avg Train Loss: 7.2424, Avg Train Accuracy: 0.3628
+Avg Test Loss: 5.2405, Avg Test Accuracy: 0.1144
+
+--- Round 9/10 ---
+  Training on client 12
+  Train loss: 7.1492, Train accuracy: 0.3600
+  Training on client 97
+  Train loss: 5.6792, Train accuracy: 0.4425
+  Training on client 31
+  Train loss: 5.1429, Train accuracy: 0.4175
+  Training on client 87
+  Train loss: 6.9330, Train accuracy: 0.3675
+  Training on client 40
+  Train loss: 8.3833, Train accuracy: 0.3600
+  Training on client 29
+  Train loss: 8.3750, Train accuracy: 0.3325
+  Training on client 26
+  Train loss: 10.1434, Train accuracy: 0.2850
+  Training on client 19
+  Train loss: 8.1139, Train accuracy: 0.3075
+  Training on client 4
+  Train loss: 3.0722, Train accuracy: 0.5850
+  Training on client 6
+  Train loss: 8.8487, Train accuracy: 0.3300
+Avg Train Loss: 7.1841, Avg Train Accuracy: 0.3788
+Avg Test Loss: 4.7011, Avg Test Accuracy: 0.1315
+
+--- Round 10/10 ---
+  Training on client 32
+  Train loss: 8.3436, Train accuracy: 0.3575
+  Training on client 61
+  Train loss: 2.7453, Train accuracy: 0.5225
+  Training on client 79
+  Train loss: 10.2252, Train accuracy: 0.2775
+  Training on client 99
+  Train loss: 7.4509, Train accuracy: 0.3625
+  Training on client 10
+  Train loss: 4.1462, Train accuracy: 0.4475
+  Training on client 59
+  Train loss: 11.5914, Train accuracy: 0.2750
+  Training on client 54
+  Train loss: 9.5694, Train accuracy: 0.3200
+  Training on client 81
+  Train loss: 9.2259, Train accuracy: 0.2675
+  Training on client 74
+  Train loss: 8.3166, Train accuracy: 0.3150
+  Training on client 25
+  Train loss: 5.2422, Train accuracy: 0.4400
+Avg Train Loss: 7.6857, Avg Train Accuracy: 0.3585
+Avg Test Loss: 4.4849, Avg Test Accuracy: 0.1414
