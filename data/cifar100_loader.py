@@ -1,7 +1,3 @@
-# This script defines a function to load the CIFAR-100 dataset using PyTorch.
-# It includes data augmentation and normalization transformations for training and testing sets.
-# The function returns DataLoader objects for both training and testing datasets.
-
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader, Subset, Dataset, random_split
 from collections import defaultdict
@@ -12,6 +8,8 @@ import pickle
 import numpy as np
 
 class TransformedDataset(Dataset):
+    """A wrapper dataset that applies transformations to the CIFAR-100 dataset."""
+
     def __init__(self, dataset, transform):
         self.dataset = dataset
         self.transform = transform
@@ -25,6 +23,16 @@ class TransformedDataset(Dataset):
         return len(self.dataset)
 
 def get_cifar100_loaders(batch_size=64, val_split=0.1):
+    """Load CIFAR-100 dataset for centralized scenario.
+    Args:
+        batch_size: Batch size for DataLoader.
+        val_split: Fraction of training data to use for validation.
+    Returns:
+        train_loader: DataLoader for training data.
+        val_loader: DataLoader for validation data.
+        test_loader: DataLoader for test data.
+    """
+    # Define transforms for training and testing
     transform_test = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
@@ -56,18 +64,28 @@ def get_cifar100_loaders(batch_size=64, val_split=0.1):
 
     return train_loader, val_loader, test_loader
 
-
-# Federated CIFAR-100 Dataloaders
-# This function creates federated dataloaders for CIFAR-100 dataset.
 def get_federated_cifar100_dataloaders(
     num_clients,
     num_classes_per_client,
     batch_size=50,
     seed=42,
-    class_balanced=True,
     federatedTest=False,
     val_split=0
 ):
+    """Load CIFAR-100 dataset for federated learning scenario.
+    Args:
+        num_clients: Number of clients in the federated setup.
+        num_classes_per_client: Number of classes assigned to each client.
+        batch_size: Batch size for DataLoader.
+        seed: Random seed for reproducibility.
+        federatedTest: Whether to create separate test sets for each client.
+        val_split: Fraction of training data to use for validation.
+    Returns:
+        train_datasets: List of DataLoader for each client's training data.
+        val_loader: DataLoader for validation data.
+        test_loaders: DataLoader for test data, either shared or
+            separate for each client.
+    """
     random.seed(seed)
     torch.manual_seed(seed)
 
@@ -133,34 +151,12 @@ def get_federated_cifar100_dataloaders(
     samples_per_client = total_samples // num_clients
 
     for client_id, class_set in enumerate(client_class_map):
-        if class_balanced:
-            per_class_quota = samples_per_client // num_classes_per_client
-            for cls in class_set:
-                available = [i for i in train_class_indices[cls] if i not in used_train_indices]
-                if len(available) < per_class_quota:
-                    raise ValueError(f"Not enough samples in class {cls} for client {client_id}")
-                selected = available[:per_class_quota]
-                used_train_indices.update(selected)
-                client_train_indices[client_id].extend(selected)
-        else:
-            all_available = []
-            for cls in class_set:
-                all_available += [i for i in train_class_indices[cls] if i not in used_train_indices]
-            
-            if len(all_available) >= samples_per_client:
-                random.shuffle(all_available)
-                selected = all_available[:samples_per_client]
-            else:
-                # Not enough unique, fill with duplicates from allowed classes
-                selected = all_available.copy()
-                needed = samples_per_client - len(all_available)
-                # Sample with replacement from assigned classes
-                candidate_pool = []
-                for cls in class_set:
-                    candidate_pool += train_class_indices[cls]
-                extra = random.choices(candidate_pool, k=needed)
-                selected.extend(extra)
-
+        per_class_quota = samples_per_client // num_classes_per_client
+        for cls in class_set:
+            available = [i for i in train_class_indices[cls] if i not in used_train_indices]
+            if len(available) < per_class_quota:
+                raise ValueError(f"Not enough samples in class {cls} for client {client_id}")
+            selected = available[:per_class_quota]
             used_train_indices.update(selected)
             client_train_indices[client_id].extend(selected)
 
@@ -216,6 +212,23 @@ def create_mixed_bias_and_size_partition(
     beta=5.0,
     seed=1
 ):
+    """Create a partition of the CIFAR-100 dataset with mixed class coverage and size.
+    Args:
+        num_clients: Number of clients to partition the dataset into.
+        dataset: The CIFAR-100 dataset to partition.
+        num_classes: Total number of classes in the dataset.
+        class_coverage_modes: List of tuples (name, count, fraction) defining class coverage for clients.
+        size_modes: List of size categories for clients.
+        size_weights: Probability for each size category.
+        size_means: Mean sizes for each size category.
+        size_stds: Standard deviations for each size category.
+        beta: Concentration parameter for Dirichlet distribution.
+        seed: Random seed for reproducibility.
+    Returns:
+        client_indices: List of lists, where each sublist contains indices of samples for a client.
+        client_class_map: List of sets, where each set contains classes assigned to a client.
+        client_metadata: List of dictionaries containing metadata for each client.
+    """
     rng = np.random.default_rng(seed)
 
     class_to_indices = defaultdict(list)
@@ -301,7 +314,23 @@ def get_unbalanced_cifar100_datasets(
     batch_size=50,
     seed=1
 ):
-    # Transforms
+    """Load CIFAR-100 dataset with unbalanced partitioning for federated learning.
+    Args:
+        num_clients: Number of clients to partition the dataset into.
+        class_coverage_modes: List of tuples (name, count, fraction) defining class coverage for clients.
+        size_modes: List of size categories for clients.
+        size_weights: Probability for each size category.
+        size_means: Mean sizes for each size category.
+        size_stds: Standard deviations for each size category.
+        beta: Concentration parameter for Dirichlet distribution.
+        batch_size: Batch size for DataLoader.
+        seed: Random seed for reproducibility.
+    Returns:
+        client_datasets: List of datasets for each client.
+        test_loader: DataLoader for test data.
+        client_class_map: List of sets, where each set contains classes assigned to a client.
+        client_metadata: List of dictionaries containing metadata for each client.
+    """
     transform_test = transforms.Compose([
         transforms.Resize(224),
         transforms.ToTensor(),
@@ -316,6 +345,7 @@ def get_unbalanced_cifar100_datasets(
     train_dataset = datasets.CIFAR100(root='./dataset', train=True, download=True, transform=transform_train)
     test_dataset = datasets.CIFAR100(root='./dataset', train=False, download=True, transform=transform_test)
 
+    # Create mixed bias and size partition
     client_indices, client_class_map, client_metadata = create_mixed_bias_and_size_partition(
         num_clients=num_clients,
         dataset=train_dataset,
@@ -328,6 +358,7 @@ def get_unbalanced_cifar100_datasets(
         seed=seed
     )
 
+    # Create client datasets and test loader
     client_datasets = [Subset(train_dataset, indices) for indices in client_indices]
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     return client_datasets, test_loader, client_class_map, client_metadata
