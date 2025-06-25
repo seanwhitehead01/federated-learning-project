@@ -2,8 +2,8 @@ import torch.optim as optim
 from eval import evaluate
 from train import train
 import random
-from models.prepare_model import freeze_backbone
-from models.federated_averaging import get_trainable_keys, average_models, average_metrics, train_on_client
+from model.prepare_model import freeze_backbone
+from model.federated_averaging import get_trainable_keys, average_models, average_metrics, train_on_client
 
 def run_grid_search(train_loader, val_loader, model_fn, criterion, configs, device):
     """ Runs a grid search over hyperparameters for a given model.
