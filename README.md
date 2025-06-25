@@ -51,6 +51,9 @@ All experiments can be executed in Google Colab. Some notebooks allow configurat
    !pip install -r requirements.txt
    ```
 4. **Run one of the notebooks** depending on the desired experiment:
+   ```bash
+   %run scripts/notebook-name.ipynb
+   ```
    - `centralized_baseline.ipynb`: Centralized training baseline
    - `centralized_model_editing.ipynb`: Centralized model editing baseline
    - `federated_averaging.ipynb`: Federated learning with IID and non-IID clients
