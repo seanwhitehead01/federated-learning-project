@@ -3,16 +3,6 @@ from collections import Counter
 import torch
 
 def get_class_distribution_vector(client_dataset, num_classes=100):
-    """
-    Returns the per-class proportion of samples in the client's dataset.
-
-    Args:
-        client_dataset: PyTorch Dataset or Subset
-        num_classes: total number of classes (default = 100 for CIFAR-100)
-
-    Returns:
-        distribution: list of floats of length num_classes, summing to 1
-    """
     label_counts = Counter()
 
     for _, label in client_dataset:
@@ -26,18 +16,6 @@ def get_class_distribution_vector(client_dataset, num_classes=100):
     return distribution
 
 def compute_kl_discrepancy(client_dataset, num_classes=100, epsilon=1e-12):
-    """
-    Computes the KL divergence between a client's class distribution
-    and a uniform distribution over all classes.
-
-    Args:
-        client_dataset: PyTorch Dataset or Subset
-        num_classes: total number of classes (e.g., 100 for CIFAR-100)
-        epsilon: small value to avoid log(0)
-
-    Returns:
-        KL divergence (float)
-    """
     label_counts = Counter()
     for _, label in client_dataset:
         label_counts[label] += 1
@@ -62,20 +40,6 @@ def compute_kl_discrepancy(client_dataset, num_classes=100, epsilon=1e-12):
     return kl_div
 
 def compute_discrepancy_aware_weights_sigmoid(client_sizes, discrepancies, a=0.4, b=0.01, tau=0.01):
-    """
-    Computes normalized client weights using a sigmoid over (n - a*d + b),
-    allowing smoother contribution of discrepancies.
-
-    Args:
-        client_sizes: list or array of ints (number of samples per client)
-        discrepancies: list or array of floats (KL divergence per client)
-        a: penalty scaling factor for discrepancy
-        b: bias term to avoid all-zeros in logits
-        tau: temperature of the sigmoid function (controls smoothness)
-
-    Returns:
-        weights: list of floats summing to 1
-    """
     client_sizes = np.array(client_sizes, dtype=np.float64)
     discrepancies = np.array(discrepancies, dtype=np.float64)
 
@@ -92,18 +56,6 @@ def compute_discrepancy_aware_weights_sigmoid(client_sizes, discrepancies, a=0.4
     return weights
 
 def compute_severity(client_sizes, discrepancies, a=0.9, b=0.1):
-    """
-    Computes severity scores for clients based on size and discrepancy.
-
-    Args:
-        client_sizes: list or array of ints (number of samples per client)
-        discrepancies: list or array of floats (KL divergence per client)
-        a: penalty scaling factor for discrepancy
-        b: bias term to avoid all-zeros in logits
-
-    Returns:
-        severity_scores: list of severity scores for each client
-    """
     client_sizes = np.array(client_sizes, dtype=np.float64)
     discrepancies = np.array(discrepancies, dtype=np.float64)
 
