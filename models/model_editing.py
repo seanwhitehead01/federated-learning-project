@@ -4,12 +4,18 @@ import torch.nn.functional as F
 import copy
 from math import floor
 
-def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=100):
+
+def fischer_scores(model, dataloader, device, R=1, mask=None, N=None):
     model.eval()
     model.to(device)
 
+    class_labels = [i for i, count in enumerate(N) if count > 0]
+
+    # Initialize scores
     scores = {name: torch.zeros_like(p) for name, p in model.named_parameters() if p.requires_grad}
-    class_counts = defaultdict(int)
+    
+    # Explicitly initialize class_counts
+    class_counts = {c: 0 for c in class_labels}
 
     for data_batch, labels_batch in dataloader:
         data_batch = data_batch.to(device)
@@ -19,7 +25,10 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
             x = data_batch[i].unsqueeze(0)
             y = labels_batch[i].item()
 
-            if class_counts[y] >= N:
+            if y not in class_labels:
+                continue  # skip irrelevant classes
+
+            if class_counts[y] >= N[y]:
                 continue
             class_counts[y] += 1
 
@@ -41,12 +50,12 @@ def fischer_scores(model, dataloader, device, R=1, mask=None, N=1, num_classes=1
                             g = g * mask[name].float()
                         scores[name] += g ** 2
 
-        if all(class_counts[c] >= N for c in range(num_classes)):
+        if all(class_counts[c] >= N[c] for c in class_labels):
             break
 
     return scores
 
-def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=1, num_classes=100, verbose=True):
+def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples_per_class=None, verbose=True, batch_size=50):
     model_copy = copy.deepcopy(model).to(device)
     model_copy.eval()
 
@@ -59,13 +68,13 @@ def mask_calculator(model, dataset, device, rounds=4, sparsity=0.1, R=1, samples
 
         dataloader = torch.utils.data.DataLoader(
             dataset,
-            batch_size=50,
+            batch_size=batch_size,
             shuffle=True,
         )
 
         scores = fischer_scores(
             model_copy, dataloader, device=device, R=R,
-            mask=mask, N=samples_per_class, num_classes=num_classes
+            mask=mask, N=samples_per_class
         )
 
         # Set +inf to already masked or zero-score elements
