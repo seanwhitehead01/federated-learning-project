@@ -3,6 +3,8 @@
 
 This project presents the development and evaluation of models within a Federated Learning framework using the CIFAR-100 dataset. A centralized model is first implemented, followed by a federated version assessed under both IID and non-IID data distributions. Model editing with varying weight sparsity is applied in both settings to evaluate performance impacts. Additionally, the study examines client heterogeneity by simulating imbalanced data distributions across clients, with variations in class presence and dataset size. This scenario highlights the negative effects of ‘harmful’ clients on the global model. To address these challenges, two corrective actions are applied: sparse fine-tuning to limit disruptive client updates, and weighted aggregation based on client dataset properties.
 
+My main contribution focused on the federated learning with model editing component of the project. I developed and tested approaches based on weight sparsity, evaluated their effectiveness across IID and non-IID client distributions, and documented the experiments in dedicated notebooks.
+
 ---
 
 ## 📁 Repository Structure
